@@ -220,6 +220,7 @@
   <span><b id="pageCount">0.0</b> 枚 <span id="pageSpec">(20×20)</span></span>
   <span class="modeword" id="footMode">通常</span>
   <span style="margin-left:auto" id="saveState">保存済み</span>
+  <button id="quickSaveBtn" style="font-size:12px;padding:3px 10px;">ファイルに保存</button>
 </footer>
 
 <div id="toast" role="status"></div>
@@ -537,6 +538,9 @@ document.getElementById("exportAllBtn").addEventListener("click", function(){
   var name = "kaikou_memo_" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + ".json";
   download(name, JSON.stringify(state, null, 1), "application/json;charset=utf-8");
   toast("全データを書き出しました — iCloud Drive等に保存してください", false);
+});
+  document.getElementById("quickSaveBtn").addEventListener("click", function(){
+  document.getElementById("exportAllBtn").click();
 });
 document.getElementById("importAllBtn").addEventListener("click", function(){
   document.getElementById("importFile").click();
