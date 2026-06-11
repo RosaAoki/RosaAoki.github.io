@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- © 2026 蒼樹ろーさ / MIT License -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -61,8 +60,16 @@
     padding:16px;
   }
   body.revision #editor{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu);}
+  details.howto{
+    border-bottom:1px solid var(--line);padding:7px 14px 8px;
+    font-size:12px;color:var(--quiet);background:var(--paper);
+  }
+  details.howto summary{cursor:pointer;letter-spacing:.05em;}
+  details.howto ol{margin:8px 0 4px;padding-left:20px;line-height:1.9;}
+  details.howto li{margin-bottom:2px;}
+  details.howto .caution{margin-top:8px;line-height:1.8;}
   .modebar{
-    display:flex;align-items:center;gap:10px;padding:8px 14px;
+    display:flex;align-items:center;gap:10px;padding:8px 14px;flex-wrap:wrap;
   }
   .modebadge{
     font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--quiet);
@@ -70,6 +77,10 @@
   }
   body.revision .modebadge{background:var(--shu);border-color:var(--shu);color:#fff;}
   .modebar .hint{font-size:11px;color:var(--quiet);flex:1;}
+  @media (max-width:560px){
+    .modebar .hint{order:9;flex:1 1 100%;}
+    .modebar .modebadge{margin-right:auto;}
+  }
 
   #diffPanel{
     max-height:32vh;overflow:auto;border-top:1px solid var(--shu-line);
@@ -156,9 +167,21 @@
 <main>
   <!-- 執筆ビュー -->
   <div id="writeView" class="view active">
+    <details class="howto">
+      <summary>はじめての方へ（使い方）</summary>
+      <ol>
+        <li>「＋作品」で原稿を作り、本文を書きます。ふつうのメモ帳として使えます。</li>
+        <li>AIに相談するときは「全文コピー」を押してください。本文がコピーされ、改稿前の本文が控えとして残り、朱筆モードに入ります。</li>
+        <li>AIの提案を読み、取り入れたい箇所だけ本文を直します。</li>
+        <li>直し終えたら「通常へ戻る（記録を確定）」を押します。変えた箇所だけが「朱」として記録されます。変えなかった箇所は何も記録されません——そこがあなたの筆のままである、という記録です。</li>
+        <li>「記録」タブで、控えの一覧（本文を戻せます）、朱の記録、Markdownへの書き出しができます。記録は過程の履歴です——あとで戻した変更も、記録には残ります。</li>
+      </ol>
+      <div class="caution">※データはこのブラウザの中だけに保存されています。ブラウザの履歴・サイトデータを消すと一緒に消えるので、書いた日は「ファイルに保存」を押して、ファイルを残してください。</div>
+    </details>
     <div class="modebar">
       <span class="modebadge" id="modeBadge">通常</span>
-      <span class="hint" id="modeHint">全文コピーで自動的にスナップショットを撮り、朱筆モードに入ります。</span>
+      <span class="hint" id="modeHint">「全文コピー」を押すと、改稿前の本文を控えに残して朱筆モードに入ります。</span>
+      <button id="copyAllBtn">全文コピー</button>
       <button id="modeBtn">朱筆モードへ</button>
     </div>
     <div id="editorWrap">
@@ -183,13 +206,12 @@
           <option value="40x30">40×30（1200字）</option>
         </select>
       </div>
-      <div class="note">換算枚数は下のステータスバーに常時表示されます。ちゅうでん児童文学賞は400字詰換算です。</div>
+      <div class="note">換算枚数は下のステータスバーに常時表示されます。</div>
     </section>
 
     <section class="block">
-      <h2>スナップショット（全文コピー時に自動保存）</h2>
+      <h2>改稿前の本文の控え（全文コピー時に自動保存）</h2>
       <ul class="plain" id="snapList"></ul>
-      <div class="note">各スナップショットに、対応するちゃっとのJSON（またはテキスト）を添付して束ねられます。</div>
     </section>
 
     <section class="block">
@@ -224,7 +246,6 @@
 </footer>
 
 <div id="toast" role="status"></div>
-<input type="file" id="chatFile" accept=".json,.txt" hidden>
 
 <script>
 (function(){
@@ -363,7 +384,7 @@ function setMode(rev){
   modeBtn.textContent = rev ? "通常へ戻る（記録を確定）" : "朱筆モードへ";
   modeHint.textContent = rev
     ? "提案の反映を書き込んでください。変更は下に朱で表示されます。"
-    : "全文コピーで自動的にスナップショットを撮り、朱筆モードに入ります。";
+    : "「全文コピー」を押すと、改稿前の本文を控えに残して朱筆モードに入ります。";
   if(rev){ baseline = editor.value; renderLiveDiff(); }
 }
 
@@ -384,17 +405,24 @@ function commitRevision(){
   toast(hunks.length ? "朱 "+hunks.length+"件を記録しました" : "変更なし（維持は沈黙が記録）", hunks.length>0);
 }
 modeBtn.addEventListener("click", function(){
-  if(revision) commitRevision(); else enterRevision();
+  if(revision){ commitRevision(); }
+  else {
+    if(editor.value) takeSnapshot();
+    enterRevision();
+    toast(editor.value ? "控えを残し、朱筆モードに入りました" : "朱筆モードに入りました", true);
+  }
 });
 
-/* ---------- スナップショット（全文コピー検知） ---------- */
+/* ---------- 控え（全文コピー検知） ---------- */
+var suppressCopyDetect = false;
 editor.addEventListener("copy", function(){
+  if(suppressCopyDetect) return;
   var selLen = editor.selectionEnd - editor.selectionStart;
   var total = editor.value.length;
   if(total > 0 && selLen >= total * 0.95){
     takeSnapshot();
     enterRevision();
-    toast("全文コピーを検知 — スナップショットを保存し、朱筆モードに入りました", true);
+    toast("全文コピーを検知 — 控えを残し、朱筆モードに入りました", true);
   }
 });
 function takeSnapshot(){
@@ -408,29 +436,28 @@ function takeSnapshot(){
   });
   save(); renderSnapshots();
 }
-
-/* ---------- ちゃっとJSON添付 ---------- */
-var chatFileInput = document.getElementById("chatFile");
-var pendingSnapId = null;
-chatFileInput.addEventListener("change", function(){
-  var f = chatFileInput.files[0];
-  if(!f || !pendingSnapId) return;
-  var reader = new FileReader();
-  reader.onload = function(){
-    var w = cur();
-    for(var i=0;i<w.snapshots.length;i++){
-      if(w.snapshots[i].id===pendingSnapId){
-        w.snapshots[i].chatName = f.name;
-        w.snapshots[i].chatContent = String(reader.result);
-        break;
-      }
-    }
-    save(); renderSnapshots();
-    toast("ちゃっとを束ねました："+f.name, false);
-  };
-  reader.readAsText(f);
-  chatFileInput.value="";
+document.getElementById("copyAllBtn").addEventListener("click", function(){
+  var text = editor.value;
+  if(!text){ toast("本文がまだありません", false); return; }
+  function done(){
+    takeSnapshot();
+    enterRevision();
+    toast("全文をコピーしました — 控えを残し、朱筆モードに入りました", true);
+  }
+  function fallback(){
+    suppressCopyDetect = true;
+    editor.focus();
+    editor.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    editor.setSelectionRange(text.length, text.length);
+    suppressCopyDetect = false;
+    done();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else { fallback(); }
 });
+
 
 /* ---------- 描画 ---------- */
 function renderWorks(){
@@ -441,19 +468,15 @@ function renderWorks(){
 function renderSnapshots(){
   var w = cur();
   var ul = document.getElementById("snapList");
-  if(!w.snapshots.length){ ul.innerHTML = '<li style="color:var(--quiet)">まだありません。本文を全選択してコピーすると自動で残ります。</li>'; return; }
+  if(!w.snapshots.length){ ul.innerHTML = '<li style="color:var(--quiet)">まだありません。執筆画面で「全文コピー」を押すと自動で残ります。</li>'; return; }
   ul.innerHTML = w.snapshots.slice().reverse().map(function(s){
-    var chat = s.chatName
-      ? '<div class="chatTag has">束ねたちゃっと：'+esc(s.chatName)+'</div>'
-      : '<div class="chatTag">ちゃっと未添付</div>';
     return '<li>'+
       '<div class="snapHead"><span class="t">'+s.time+'</span>'+
       '<span class="len">'+s.text.length.toLocaleString()+'字</span>'+
       '<span class="spacer"></span>'+
-      '<button data-act="attach" data-id="'+s.id+'">ちゃっとを束ねる</button>'+
       '<button data-act="restore" data-id="'+s.id+'">本文に戻す</button>'+
       '<button data-act="delsnap" data-id="'+s.id+'">削除</button>'+
-      '</div>'+chat+'</li>';
+      '</div></li>';
   }).join("");
 }
 function renderRecords(){
@@ -475,15 +498,14 @@ function listHandler(e){
   var btn = e.target.closest("button"); if(!btn) return;
   var act = btn.getAttribute("data-act");
   var w = cur();
-  if(act==="attach"){ pendingSnapId = btn.getAttribute("data-id"); chatFileInput.click(); }
   if(act==="restore"){
     var s = w.snapshots.find(function(x){return x.id===btn.getAttribute("data-id");});
-    if(s && confirm("現在の本文をこのスナップショットの内容に戻しますか？\n（現在の本文は失われます。心配なら先に全データを保存）")){
+    if(s && confirm("現在の本文をこの控えの内容に戻しますか？\n（現在の本文は失われます。心配なら先に全データを保存）")){
       editor.value = s.text; w.text = s.text; save(); updateCounts(); toast("本文を戻しました", false);
     }
   }
   if(act==="delsnap"){
-    if(confirm("このスナップショットを削除しますか？")){
+    if(confirm("この控えを削除しますか？")){
       w.snapshots = w.snapshots.filter(function(x){return x.id!==btn.getAttribute("data-id");});
       save(); renderSnapshots();
     }
@@ -515,10 +537,10 @@ document.getElementById("exportMdBtn").addEventListener("click", function(){
   var md = "# 改稿記録 — " + w.title + "\n\n";
   md += "原稿用紙設定: " + w.cols + "字 × " + w.rows + "行\n";
   md += "書き出し日時: " + stamp() + "\n\n";
-  md += "## スナップショット\n\n";
+  md += "## 改稿前の本文の控え\n\n";
   if(w.snapshots.length){
     w.snapshots.forEach(function(s){
-      md += "- ["+s.time+"] "+s.text.length.toLocaleString()+"字"+(s.chatName? "（ちゃっと: "+s.chatName+"）":"（ちゃっと未添付）")+"\n";
+      md += "- ["+s.time+"] "+s.text.length.toLocaleString()+"字"+"\n";
     });
   } else md += "- なし\n";
   md += "\n## 改稿（提案受け入れによる変更）\n\n";
@@ -539,7 +561,7 @@ document.getElementById("exportAllBtn").addEventListener("click", function(){
   download(name, JSON.stringify(state, null, 1), "application/json;charset=utf-8");
   toast("全データを書き出しました — iCloud Drive等に保存してください", false);
 });
-  document.getElementById("quickSaveBtn").addEventListener("click", function(){
+document.getElementById("quickSaveBtn").addEventListener("click", function(){
   document.getElementById("exportAllBtn").click();
 });
 document.getElementById("importAllBtn").addEventListener("click", function(){
@@ -640,9 +662,5 @@ function initFromState(){
 initFromState();
 })();
 </script>
-<div style="text-align:center; padding:6px 0 10px; font-size:11px; color:#76716A;">
-  作 <a href="https://rosaaoki.github.io/" target="_blank" rel="noopener"
-  style="color:#3E6BB0; text-decoration:none;">蒼樹ろーさ</a>
-</div>
 </body>
 </html>
