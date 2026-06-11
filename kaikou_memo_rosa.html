@@ -61,7 +61,7 @@
   }
   body.revision #editor{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu);}
   .modebar{
-    display:flex;align-items:center;gap:10px;padding:8px 14px;
+    display:flex;align-items:center;gap:10px;padding:8px 14px;flex-wrap:wrap;
   }
   .modebadge{
     font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--quiet);
@@ -69,6 +69,10 @@
   }
   body.revision .modebadge{background:var(--shu);border-color:var(--shu);color:#fff;}
   .modebar .hint{font-size:11px;color:var(--quiet);flex:1;}
+  @media (max-width:560px){
+    .modebar .hint{order:9;flex:1 1 100%;}
+    .modebar .modebadge{margin-right:auto;}
+  }
 
   #diffPanel{
     max-height:32vh;overflow:auto;border-top:1px solid var(--shu-line);
