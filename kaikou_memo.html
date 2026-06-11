@@ -234,6 +234,13 @@
         iPhoneではiCloud Driveに置くと、PCと同じファイルを共有できます。
       </div>
     </section>
+
+    <section class="block">
+      <div class="note">お役に立ちましたら、布教いただけると嬉しいです。</div>
+      <div class="btnRow">
+        <button id="shareXBtn">Xでシェア</button>
+      </div>
+    </section>
   </div>
 </main>
 
@@ -560,6 +567,46 @@ document.getElementById("exportAllBtn").addEventListener("click", function(){
   var name = "kaikou_memo_" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + ".json";
   download(name, JSON.stringify(state, null, 1), "application/json;charset=utf-8");
   toast("全データを書き出しました — iCloud Drive等に保存してください", false);
+});
+/* ==========================================================
+   ことば辞書（Xシェア用）
+   シェアボタンを押すと、ここからランダムでひとつ選ばれます。
+   増やしたい・変えたいときは、この一角をAIに渡して
+   「同じ温度で増やして」と伝えてください。
+   ========================================================== */
+var KOTOBA = [
+  "小さくなった消しゴム、いつの間にかいなくなりませんか。",
+  "ラムネの瓶のビー玉、どうして惹かれるんだろう。",
+  "ふわふわのホットケーキ、重ねたい。",
+  "ポケットから飴が出てきた。",
+  "赤いゴム、ずっと手首に巻いたまま。",
+  "押しピンの箱を振る。シャカシャカ、マラカスがわり。",
+  "気が抜けた炭酸が好き。",
+  "セロハンテープの端、見失ってグルグル回してる。",
+  "角がまだ尖ってるバター、嬉しい。",
+  "定規のへこみ、つけたの誰だ。",
+  "給食のミルメーク、好きだった。",
+  "傘の柄、どこかに引っかけたまま忘れませんか。",
+  "新しい靴下、おろす日はまた今度。",
+  "ふせん、途中で割れて剥がれがち。",
+  "ホチキスの針、補充するとき少しだけ緊張する。",
+  "自転車のベル、人をどかすものじゃない。",
+  "漂白剤、プールのにおい。",
+  "えんぴつのにおい、削りたてだけ。",
+  "ガチャガチャ、カプセル自体も好き。",
+  "揚げたてのコロッケ、歩きながら食べる。",
+  "カルピス、少しだけ濃いめに作る。",
+  "消しかす、集めて山にしてた。",
+  "お風呂上がり、腰に手を当て牛乳を飲む――様式美。"
+];
+document.getElementById("shareXBtn").addEventListener("click", function(){
+  var word = KOTOBA[Math.floor(Math.random()*KOTOBA.length)];
+  var text = word + "\n#改稿記録メモ";
+  var url = "https://rosaaoki.github.io/#kaikou";
+  window.open(
+    "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url),
+    "_blank", "noopener"
+  );
 });
 document.getElementById("quickSaveBtn").addEventListener("click", function(){
   document.getElementById("exportAllBtn").click();
