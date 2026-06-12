@@ -88,6 +88,16 @@
     font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:14px;line-height:1.8;
   }
   body.revision #diffPanel{display:block;}
+  #aiPasteWrap{margin:8px 0 4px;font-size:12px;color:var(--quiet);}
+  #aiPasteWrap summary{cursor:pointer;letter-spacing:.05em;}
+  #aiPaste{
+    width:100%;box-sizing:border-box;min-height:80px;margin-top:6px;
+    font-size:12px;line-height:1.7;padding:8px;border:1px solid var(--line);
+    border-radius:6px;background:#fff;color:var(--ink);resize:vertical;
+  }
+  details.aiReply{margin-top:6px;font-size:12px;color:var(--quiet);}
+  details.aiReply summary{cursor:pointer;}
+  .aiReplyBody{white-space:pre-wrap;margin-top:6px;line-height:1.7;font-size:12px;}
   #diffPanel h3{font-family:inherit;font-size:11px;color:var(--shu);letter-spacing:.15em;font-weight:600;margin-bottom:8px;font-family:"Hiragino Kaku Gothic ProN",sans-serif;}
   .hunk{margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--shu-line);}
   .hunk:last-child{border-bottom:none;}
@@ -189,6 +199,10 @@
     </div>
     <div id="diffPanel">
       <h3>朱（改稿前 → 改稿後）— 通常へ戻すと確定して記録されます</h3>
+      <details id="aiPasteWrap">
+        <summary>AIの回答を添える（任意）</summary>
+        <textarea id="aiPaste" placeholder="AIの回答をここに貼っておくと、確定時に朱の記録とセットで残ります。何度かやり取りした場合は、続けて貼り足してください。"></textarea>
+      </details>
       <div id="diffBody"><div class="nodiff">まだ変更はありません。</div></div>
     </div>
   </div>
@@ -404,12 +418,23 @@ function commitRevision(){
   var hunks = diffLines(baseline, editor.value);
   var w = cur();
   var now = stamp();
+  var paste = document.getElementById("aiPaste");
+  var aiText = paste.value.trim();
+  if(aiText){
+    w.records.push({time: now, aiReply: aiText});
+  }
   hunks.forEach(function(h){
     w.records.push({time: now, before: h.before, after: h.after});
   });
+  paste.value = "";
+  document.getElementById("aiPasteWrap").open = false;
   setMode(false);
   save(); renderRecords();
-  toast(hunks.length ? "朱 "+hunks.length+"件を記録しました" : "変更なし（維持は沈黙が記録）", hunks.length>0);
+  var msg;
+  if(hunks.length) msg = "朱 "+hunks.length+"件" + (aiText ? "と、AIの回答" : "") + "を記録しました";
+  else if(aiText) msg = "変更なし — AIの回答のみ記録しました（流した提案の控え）";
+  else msg = "変更なし（維持は沈黙が記録）";
+  toast(msg, hunks.length>0 || !!aiText);
 }
 modeBtn.addEventListener("click", function(){
   if(revision){ commitRevision(); }
@@ -493,7 +518,8 @@ function renderRecords(){
   ul.innerHTML = w.records.slice().reverse().map(function(r, idxRev){
     var idx = w.records.length - 1 - idxRev;
     var body;
-    if(r.before && r.after) body = '<span class="old">'+esc(r.before)+'</span><span class="arrow">→</span><span class="new">'+esc(r.after)+'</span>';
+    if(r.aiReply) body = '<details class="aiReply"><summary>もとになったAIの回答</summary><div class="aiReplyBody">'+esc(r.aiReply)+'</div></details>';
+    else if(r.before && r.after) body = '<span class="old">'+esc(r.before)+'</span><span class="arrow">→</span><span class="new">'+esc(r.after)+'</span>';
     else if(r.before) body = '<span class="old">'+esc(r.before)+'</span><span class="arrow">→</span><span class="new">（削除）</span>';
     else body = '<span class="arrow">＋</span><span class="only">'+esc(r.after)+'</span>';
     return '<li class="recItem"><div class="meta">['+r.time+']<button data-act="delrec" data-idx="'+idx+'">削除</button></div>'+body+'</li>';
@@ -553,6 +579,11 @@ document.getElementById("exportMdBtn").addEventListener("click", function(){
   md += "\n## 改稿（提案受け入れによる変更）\n\n";
   if(w.records.length){
     w.records.forEach(function(r){
+      if(r.aiReply){
+        md += "- ["+r.time+"] 〔もとになったAIの回答〕\n";
+        md += r.aiReply.split("\n").map(function(l){ return "  > "+l; }).join("\n") + "\n";
+        return;
+      }
       var before = r.before || "（追加）";
       var after = r.after || "（削除）";
       md += "- ["+r.time+"] "+before.replace(/\n/g," ⏎ ")+" → "+after.replace(/\n/g," ⏎ ")+"\n";
