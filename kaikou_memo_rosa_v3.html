@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>改稿記録メモ（仮）ろーさ版</title>
+<style>
+  :root{
+    --paper:#FBFAF6;
+    --ink:#2A2826;
+    --quiet:#76716A;
+    --line:#E5E2D9;
+    --shu:#B5413A;
+    --shu-soft:#FBF1EF;
+    --shu-line:#E8C7C3;
+    --panel:#F4F2EC;
+    --focus:#3A4A6B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+    font-size:15px;
+    display:flex;flex-direction:column;
+    height:100dvh;
+  }
+  button{font-family:inherit;font-size:13px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:6px 12px;}
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
+  button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  button.shu{background:var(--shu);color:#fff;border-color:var(--shu);}
+  select,input[type=number],input[type=text]{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink);}
+
+  /* ---- ログイン・読み込み画面 ---- */
+  #loadingScreen, #loginOverlay{
+    position:fixed;inset:0;z-index:1000;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--paper);
+  }
+  #loginOverlay{display:none;}
+  .loginBox{
+    width:100%;max-width:340px;padding:32px 24px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .loginBox h1{font-size:16px;text-align:center;letter-spacing:.12em;font-weight:600;color:var(--ink);}
+  .loginSub{font-size:11px;color:var(--quiet);text-align:center;letter-spacing:.04em;margin-bottom:8px;}
+  .loginBox input[type=email],
+  .loginBox input[type=password]{
+    font-family:inherit;font-size:15px;border:1px solid var(--line);
+    border-radius:6px;padding:10px 12px;background:#fff;color:var(--ink);width:100%;
+  }
+  .loginBox input::placeholder{color:var(--quiet);font-size:13px;}
+  #loginError{color:var(--shu);font-size:13px;text-align:center;display:none;line-height:1.5;}
+  #toggleRegister{background:none;border:none;color:var(--quiet);font-size:12px;text-decoration:underline;padding:4px;}
+  #toggleRegister:hover{color:var(--ink);}
+  .loadingDot{color:var(--quiet);font-size:14px;letter-spacing:.08em;}
+
+  /* ---- アプリラッパー ---- */
+  #appWrap{display:none;}
+  #appWrap.active{display:contents;}
+
+  header{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:10px 14px;border-bottom:1px solid var(--line);
+    background:var(--paper);
+  }
+  header .appname{font-size:11px;color:var(--quiet);letter-spacing:.08em;width:100%;}
+  header select{max-width:46vw;}
+  header .spacer{flex:1;}
+
+  .tabs{display:flex;gap:2px;}
+  .tabs button{border-radius:6px 6px 0 0;border-bottom:none;background:var(--panel);color:var(--quiet);}
+  .tabs button.active{background:#fff;color:var(--ink);font-weight:600;}
+
+  main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .view{flex:1;display:none;flex-direction:column;overflow:hidden;}
+  .view.active{display:flex;}
+
+  /* ---- 執筆ビュー ---- */
+  #editorWrap{flex:1;display:flex;flex-direction:column;padding:10px 14px 0;overflow:hidden;transition:background .25s;}
+  body.revision #editorWrap{background:var(--shu-soft);}
+  #editor{
+    flex:1;width:100%;resize:none;border:1px solid var(--line);border-radius:8px;
+    background:#fff;color:var(--ink);
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+    font-size:16px;line-height:1.9;letter-spacing:.02em;
+    padding:16px;
+  }
+  body.revision #editor{border-color:var(--shu);box-shadow:0 0 0 1px var(--shu);}
+  .modebar{
+    display:flex;align-items:center;gap:10px;padding:8px 14px;flex-wrap:wrap;
+  }
+  .modebadge{
+    font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--quiet);
+    letter-spacing:.1em;
+  }
+  body.revision .modebadge{background:var(--shu);border-color:var(--shu);color:#fff;}
+  .modebar .hint{font-size:11px;color:var(--quiet);flex:1;}
+  @media (max-width:560px){
+    .modebar .hint{order:9;flex:1 1 100%;}
+    .modebar .modebadge{margin-right:auto;}
+  }
+
+  #diffPanel{
+    max-height:32vh;overflow:auto;border-top:1px solid var(--shu-line);
+    background:var(--shu-soft);padding:10px 16px 14px;display:none;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:14px;line-height:1.8;
+  }
+  body.revision #diffPanel{display:block;}
+  #aiPasteWrap{margin:8px 0 4px;font-size:12px;color:var(--quiet);}
+  #aiPasteWrap summary{cursor:pointer;letter-spacing:.05em;}
+  #aiPaste{
+    width:100%;box-sizing:border-box;min-height:80px;margin-top:6px;
+    font-size:12px;line-height:1.7;padding:8px;border:1px solid var(--line);
+    border-radius:6px;background:#fff;color:var(--ink);resize:vertical;
+  }
+  details.aiReply{margin-top:6px;font-size:12px;color:var(--quiet);}
+  details.aiReply summary{cursor:pointer;}
+  .aiReplyBody{white-space:pre-wrap;margin-top:6px;line-height:1.7;font-size:12px;}
+  #diffPanel h3{font-family:inherit;font-size:11px;color:var(--shu);letter-spacing:.15em;font-weight:600;margin-bottom:8px;font-family:"Hiragino Kaku Gothic ProN",sans-serif;}
+  .hunk{margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--shu-line);}
+  .hunk:last-child{border-bottom:none;}
+  .hunk .old{color:var(--shu);text-decoration:line-through;text-decoration-thickness:1px;opacity:.75;word-break:break-all;}
+  .hunk .arrow{color:var(--shu);margin:0 4px;}
+  .hunk .new{color:var(--shu);font-weight:600;word-break:break-all;}
+  .hunk .only{color:var(--shu);word-break:break-all;}
+  .nodiff{color:var(--quiet);font-size:12px;font-family:"Hiragino Kaku Gothic ProN",sans-serif;}
+
+  footer{
+    border-top:1px solid var(--line);padding:8px 14px calc(8px + env(safe-area-inset-bottom));
+    font-size:12px;color:var(--quiet);display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+    background:var(--paper);
+  }
+  footer b{color:var(--ink);font-weight:600;}
+  body.revision footer .modeword{color:var(--shu);font-weight:600;}
+
+  /* ---- 記録ビュー ---- */
+  #recordsView{overflow:auto;padding:14px;}
+  section.block{margin-bottom:22px;}
+  section.block h2{font-size:13px;letter-spacing:.12em;color:var(--quiet);font-weight:600;margin-bottom:8px;}
+  .settingsRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;}
+  .settingsRow label{color:var(--quiet);}
+  .settingsRow input[type=number]{width:64px;}
+
+  ul.plain{list-style:none;}
+  ul.plain li{
+    border:1px solid var(--line);border-radius:8px;background:#fff;
+    padding:10px 12px;margin-bottom:8px;font-size:13px;
+  }
+  .snapHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .snapHead .t{font-weight:600;}
+  .snapHead .len{color:var(--quiet);font-size:12px;}
+  .snapHead .spacer{flex:1;}
+  .snapHead button{font-size:12px;padding:4px 8px;}
+  .chatTag{font-size:11px;color:var(--quiet);margin-top:6px;}
+  .chatTag.has{color:var(--focus);}
+
+  .recItem{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;line-height:1.8;}
+  .recItem .meta{font-family:"Hiragino Kaku Gothic ProN",sans-serif;font-size:11px;color:var(--quiet);margin-bottom:4px;display:flex;gap:8px;align-items:center;}
+  .recItem .meta button{font-size:11px;padding:2px 7px;margin-left:auto;}
+  .recItem .old{color:var(--shu);text-decoration:line-through;opacity:.75;word-break:break-all;}
+  .recItem .arrow{color:var(--shu);margin:0 4px;}
+  .recItem .new{color:var(--ink);font-weight:600;word-break:break-all;}
+  .recItem .only{word-break:break-all;}
+
+  .btnRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .note{font-size:11px;color:var(--quiet);margin-top:6px;line-height:1.6;}
+
+  #toast{
+    position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:var(--paper);font-size:13px;padding:8px 16px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
+    max-width:88vw;text-align:center;z-index:900;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.shu{background:var(--shu);}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- 読み込み中 -->
+<div id="loadingScreen">
+  <span class="loadingDot">読み込み中…</span>
+</div>
+
+<!-- ログイン -->
+<div id="loginOverlay">
+  <div class="loginBox">
+    <h1>改稿記録メモ</h1>
+    <p class="loginSub">変更は朱が記録し、維持は沈黙が記録する</p>
+    <div id="loginError"></div>
+    <input type="email" id="loginEmail" placeholder="メールアドレス" autocomplete="email">
+    <input type="password" id="loginPassword" placeholder="パスワード" autocomplete="current-password">
+    <button id="loginBtn" class="primary" style="padding:10px;font-size:14px;">ログイン</button>
+    <button id="toggleRegister">アカウントを作る</button>
+  </div>
+</div>
+
+<!-- アプリ本体 -->
+<div id="appWrap">
+
+<header>
+  <span class="appname">改稿記録メモ（仮・ろーさ版）— 変更は朱が記録し、維持は沈黙が記録する</span>
+  <select id="workSelect" aria-label="作品の切り替え"></select>
+  <button id="newWorkBtn" title="新しい作品">＋ 作品</button>
+  <button id="renameWorkBtn" title="作品名を変更">名前</button>
+  <span class="spacer"></span>
+  <div class="tabs" role="tablist">
+    <button id="tabWrite" class="active" role="tab">執筆</button>
+    <button id="tabRecords" role="tab">記録</button>
+  </div>
+  <button id="logoutBtn" style="font-size:11px;padding:4px 8px;color:var(--quiet);border-color:var(--line);">ログアウト</button>
+</header>
+
+<main>
+  <!-- 執筆ビュー -->
+  <div id="writeView" class="view active">
+    <div class="modebar">
+      <span class="modebadge" id="modeBadge">通常</span>
+      <span class="hint" id="modeHint">全文コピーで自動的にスナップショットを撮り、朱筆モードに入ります。</span>
+      <button id="copyAllBtn">全文コピー</button>
+      <button id="modeBtn">朱筆モードへ</button>
+    </div>
+    <div id="editorWrap">
+      <textarea id="editor" placeholder="ここに書く。" spellcheck="false"></textarea>
+    </div>
+    <div id="diffPanel">
+      <h3>朱（改稿前 → 改稿後）— 通常へ戻すと確定して記録されます</h3>
+      <details id="aiPasteWrap">
+        <summary>AIの回答を添える（任意）</summary>
+        <textarea id="aiPaste" placeholder="AIの回答をここに貼っておくと、確定時に朱の記録とセットで残ります。何度かやり取りした場合は、続けて貼り足してください。"></textarea>
+      </details>
+      <div id="diffBody"><div class="nodiff">まだ変更はありません。</div></div>
+    </div>
+  </div>
+
+  <!-- 記録ビュー -->
+  <div id="recordsView" class="view">
+    <section class="block">
+      <h2>原稿用紙の設定</h2>
+      <div class="settingsRow">
+        <label>1行</label><input type="number" id="colsInput" min="10" max="60" value="20">字 ×
+        <label>1枚</label><input type="number" id="rowsInput" min="10" max="60" value="20">行
+        <select id="presetSelect" aria-label="プリセット">
+          <option value="">プリセット…</option>
+          <option value="20x20">20×20（400字詰）</option>
+          <option value="40x30">40×30（1200字）</option>
+        </select>
+      </div>
+      <div class="note">換算枚数は下のステータスバーに常時表示されます。ちゅうでん児童文学賞は400字詰換算です。</div>
+    </section>
+
+    <section class="block">
+      <h2>スナップショット（全文コピー時に自動保存）</h2>
+      <ul class="plain" id="snapList"></ul>
+      <div class="note">各スナップショットに、対応するちゃっとのJSON（またはテキスト）を添付して束ねられます。</div>
+    </section>
+
+    <section class="block">
+      <h2>改稿の記録（朱筆モードで確定したもの）</h2>
+      <ul class="plain" id="recList"></ul>
+      <div class="btnRow">
+        <button id="exportMdBtn" class="primary">証跡をMarkdownで書き出す</button>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>データの保管</h2>
+      <div class="btnRow">
+        <button id="exportAllBtn">全データをファイルに保存</button>
+        <button id="importAllBtn">ファイルから読み込む</button>
+        <input type="file" id="importFile" accept=".json" hidden>
+      </div>
+      <div class="note">
+        データはクラウド（Firebase）に自動保存されます。PCでもiPhoneでも同じデータにアクセスできます。
+        「ファイルに保存」は手元のバックアップ用です。
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <span><b id="charCount">0</b> 字</span>
+  <span><b id="pageCount">0.0</b> 枚 <span id="pageSpec">(20×20)</span></span>
+  <span class="modeword" id="footMode">通常</span>
+  <span style="margin-left:auto" id="saveState">―</span>
+  <button id="quickSaveBtn" style="font-size:12px;padding:3px 10px;">ファイルに保存</button>
+</footer>
+
+<div id="toast" role="status"></div>
+<input type="file" id="chatFile" accept=".json,.txt" hidden>
+
+</div><!-- /appWrap -->
+
+<script type="module">
+/* ==========================================================
+   Firebase
+   ========================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+         onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyCddURhja-rpklx_DmQGNyHVhfAZJLOvWw",
+  authDomain: "kaikou-memo.firebaseapp.com",
+  projectId: "kaikou-memo",
+  storageBucket: "kaikou-memo.firebasestorage.app",
+  messagingSenderId: "830550112925",
+  appId: "1:830550112925:web:38cc23380ac0a86b723274"
+};
+var fbApp = initializeApp(firebaseConfig);
+var auth = getAuth(fbApp);
+var db = getFirestore(fbApp);
+
+/* ==========================================================
+   画面切り替え
+   ========================================================== */
+var loadingScreen = document.getElementById("loadingScreen");
+var loginOverlay  = document.getElementById("loginOverlay");
+var appWrap       = document.getElementById("appWrap");
+
+function showLoading(){ loadingScreen.style.display="flex"; loginOverlay.style.display="none"; appWrap.classList.remove("active"); }
+function showLogin(){   loadingScreen.style.display="none"; loginOverlay.style.display="flex"; appWrap.classList.remove("active"); }
+function showApp(){     loadingScreen.style.display="none"; loginOverlay.style.display="none"; appWrap.classList.add("active"); }
+
+/* ==========================================================
+   ログインUI
+   ========================================================== */
+var loginEmail    = document.getElementById("loginEmail");
+var loginPassword = document.getElementById("loginPassword");
+var loginBtn      = document.getElementById("loginBtn");
+var loginError    = document.getElementById("loginError");
+var toggleReg     = document.getElementById("toggleRegister");
+var isRegister    = false;
+
+function showLoginError(msg){ loginError.textContent=msg; loginError.style.display="block"; }
+
+toggleReg.addEventListener("click", function(){
+  isRegister = !isRegister;
+  loginBtn.textContent   = isRegister ? "アカウントを作成" : "ログイン";
+  toggleReg.textContent  = isRegister ? "← ログインに戻る" : "アカウントを作る";
+  loginError.style.display = "none";
+});
+
+loginBtn.addEventListener("click", async function(){
+  var email = loginEmail.value.trim();
+  var pass  = loginPassword.value;
+  if(!email||!pass){ showLoginError("メールアドレスとパスワードを入力してください"); return; }
+  loginBtn.disabled = true;
+  try{
+    if(isRegister) await createUserWithEmailAndPassword(auth, email, pass);
+    else           await signInWithEmailAndPassword(auth, email, pass);
+  }catch(e){
+    var msgs = {
+      "auth/user-not-found":      "このメールアドレスは登録されていません",
+      "auth/wrong-password":      "パスワードが違います",
+      "auth/invalid-credential":  "メールアドレスまたはパスワードが違います",
+      "auth/email-already-in-use":"このメールアドレスはすでに使われています",
+      "auth/weak-password":       "パスワードは6文字以上にしてください",
+      "auth/invalid-email":       "メールアドレスの形式が正しくありません"
+    };
+    showLoginError(msgs[e.code] || "エラーが発生しました");
+  }
+  loginBtn.disabled = false;
+});
+
+loginPassword.addEventListener("keydown", function(e){ if(e.key==="Enter") loginBtn.click(); });
+
+document.getElementById("logoutBtn").addEventListener("click", async function(){
+  if(confirm("ログアウトしますか？")) await signOut(auth);
+});
+
+/* ==========================================================
+   状態
+   ========================================================== */
+var currentUser = null;
+var state = null;
+var appReady = false;
+
+function newWork(title){
+  return {
+    id: "w" + Date.now() + Math.floor(Math.random()*1000),
+    title: title,
+    text: "",
+    cols: 20, rows: 20,
+    snapshots: [],
+    records: []
+  };
+}
+function cur(){
+  for(var i=0;i<state.works.length;i++){
+    if(state.works[i].id===state.currentId) return state.works[i];
+  }
+  return state.works[0];
+}
+
+/* ==========================================================
+   Firestore 読み書き
+   ========================================================== */
+function metaRef(){ return doc(db, "users", currentUser.uid, "data", "meta"); }
+function workRef(id){ return doc(db, "users", currentUser.uid, "works", id); }
+
+// JSON.parse(JSON.stringify(x)) で undefined 除去（Firestore対策）
+function clean(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+async function loadFromCloud(){
+  var snap = await getDoc(metaRef());
+  if(snap.exists()){
+    var meta = snap.data();
+    state = { works:[], currentId: meta.currentId };
+    for(var i=0; i<meta.workList.length; i++){
+      var ws = await getDoc(workRef(meta.workList[i].id));
+      if(ws.exists()) state.works.push(ws.data());
+    }
+    if(!state.works.length){
+      state.works.push(newWork("無題の原稿"));
+      state.currentId = state.works[0].id;
+      await saveAllToCloud();
+    }
+  }else{
+    // 初回：localStorageから移行を試みる
+    var migrated = false;
+    try{
+      var ls = localStorage.getItem("kaikou_memo_rosa_v1");
+      if(ls){
+        var parsed = JSON.parse(ls);
+        if(parsed.works && parsed.works.length){
+          state = parsed;
+          if(!state.currentId) state.currentId = state.works[0].id;
+          await saveAllToCloud();
+          localStorage.removeItem("kaikou_memo_rosa_v1");
+          migrated = true;
+        }
+      }
+    }catch(e){}
+    if(!migrated){
+      state = { works:[newWork("無題の原稿")], currentId:null };
+      state.currentId = state.works[0].id;
+      await saveAllToCloud();
+    }
+    return migrated;
+  }
+  return false;
+}
+
+async function saveAllToCloud(){
+  await setDoc(metaRef(), {
+    currentId: state.currentId,
+    workList: state.works.map(function(w){ return {id:w.id, title:w.title}; })
+  });
+  for(var i=0;i<state.works.length;i++){
+    await setDoc(workRef(state.works[i].id), clean(state.works[i]));
+  }
+}
+
+async function saveCurrentToCloud(){
+  var w = cur();
+  var json = JSON.stringify(w);
+  if(json.length > 900000){
+    document.getElementById("saveState").textContent = "⚠ データが大きすぎます — スナップショットを整理してください";
+    return;
+  }
+  await setDoc(workRef(w.id), clean(w));
+  await setDoc(metaRef(), {
+    currentId: state.currentId,
+    workList: state.works.map(function(w){ return {id:w.id, title:w.title}; })
+  });
+}
+
+/* ==========================================================
+   認証状態リスナー
+   ========================================================== */
+onAuthStateChanged(auth, async function(user){
+  if(user){
+    currentUser = user;
+    showLoading();
+    try{
+      var migrated = await loadFromCloud();
+      if(!appReady){ setupApp(); appReady = true; }
+      initFromState();
+      showApp();
+      if(migrated) toast("ローカルのデータをクラウドに移行しました ☁", false);
+    }catch(e){
+      console.error("Load error:", e);
+      alert("データの読み込みに失敗しました: " + e.message);
+      showLogin();
+    }
+  }else{
+    currentUser = null;
+    showLogin();
+  }
+});
+
+/* ==========================================================
+   アプリ本体（setupApp で一度だけ組み立て）
+   ========================================================== */
+var editor, modeBtn, modeBadge, modeHint, footMode, diffBody, workSelect;
+var revision = false;
+var baseline = "";
+
+function setupApp(){
+  editor     = document.getElementById("editor");
+  modeBtn    = document.getElementById("modeBtn");
+  modeBadge  = document.getElementById("modeBadge");
+  modeHint   = document.getElementById("modeHint");
+  footMode   = document.getElementById("footMode");
+  diffBody   = document.getElementById("diffBody");
+  workSelect = document.getElementById("workSelect");
+
+  /* ---------- 保存（Firestore） ---------- */
+  var saveTimer=null;
+  window._save = save; // exportで使う
+  function save(){
+    document.getElementById("saveState").textContent="保存中…";
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(async function(){
+      try{
+        await saveCurrentToCloud();
+        document.getElementById("saveState").textContent="☁ 保存済み";
+      }catch(e){
+        console.error("Save error:", e);
+        document.getElementById("saveState").textContent="保存エラー";
+      }
+    },1200);
+  }
+  // save を外から呼べるようにする
+  window._triggerSave = save;
+
+  /* ---------- 原稿用紙換算 ---------- */
+  function countChars(t){ return t.replace(/\n/g,"").length; }
+  function countPages(t, cols, rows){
+    if(!t) return 0;
+    var lines = t.split("\n"), total = 0;
+    for(var i=0;i<lines.length;i++){
+      var len = lines[i].length;
+      total += Math.max(1, Math.ceil(len / cols));
+    }
+    return total / rows;
+  }
+  function updateCounts(){
+    var w = cur();
+    document.getElementById("charCount").textContent = countChars(editor.value).toLocaleString();
+    document.getElementById("pageCount").textContent = countPages(editor.value, w.cols, w.rows).toFixed(1);
+    document.getElementById("pageSpec").textContent = "("+w.cols+"×"+w.rows+")";
+  }
+
+  /* ---------- 差分（行ベースLCS） ---------- */
+  function diffLines(a, b){
+    var A = a.split("\n"), B = b.split("\n");
+    var n=A.length, m=B.length;
+    if(n*m > 4000000) return a===b ? [] : [{before:a, after:b}];
+    var dp = new Array(n+1);
+    for(var i=0;i<=n;i++) dp[i]=new Int32Array(m+1);
+    for(var i=n-1;i>=0;i--){
+      for(var j=m-1;j>=0;j--){
+        dp[i][j] = A[i]===B[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+      }
+    }
+    var hunks=[], delBuf=[], addBuf=[];
+    function flush(){
+      if(delBuf.length||addBuf.length){
+        hunks.push({before:delBuf.join("\n"), after:addBuf.join("\n")});
+        delBuf=[]; addBuf=[];
+      }
+    }
+    var i=0,j=0;
+    while(i<n && j<m){
+      if(A[i]===B[j]){ flush(); i++; j++; }
+      else if(dp[i+1][j] >= dp[i][j+1]){ delBuf.push(A[i]); i++; }
+      else { addBuf.push(B[j]); j++; }
+    }
+    while(i<n){ delBuf.push(A[i]); i++; }
+    while(j<m){ addBuf.push(B[j]); j++; }
+    flush();
+    return hunks.filter(function(h){ return (h.before.trim()!=="" || h.after.trim()!==""); });
+  }
+
+  function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function hunkHtml(h, cls){
+    cls = cls || "hunk";
+    if(h.before && h.after)
+      return '<div class="'+cls+'"><span class="old">'+esc(h.before)+'</span><span class="arrow">→</span><span class="new">'+esc(h.after)+'</span></div>';
+    if(h.before)
+      return '<div class="'+cls+'"><span class="old">'+esc(h.before)+'</span><span class="arrow">→</span><span class="new">（削除）</span></div>';
+    return '<div class="'+cls+'"><span class="arrow">＋</span><span class="new only">'+esc(h.after)+'</span></div>';
+  }
+
+  var diffTimer=null;
+  function renderLiveDiff(){
+    if(!revision) return;
+    clearTimeout(diffTimer);
+    diffTimer=setTimeout(function(){
+      var hunks = diffLines(baseline, editor.value);
+      diffBody.innerHTML = hunks.length
+        ? hunks.map(function(h){return hunkHtml(h);}).join("")
+        : '<div class="nodiff">まだ変更はありません。</div>';
+    },350);
+  }
+
+  /* ---------- モード ---------- */
+  function setMode(rev){
+    revision = rev;
+    document.body.classList.toggle("revision", rev);
+    modeBadge.textContent = rev ? "朱筆" : "通常";
+    footMode.textContent = rev ? "朱筆モード" : "通常";
+    modeBtn.textContent = rev ? "通常へ戻る（記録を確定）" : "朱筆モードへ";
+    modeHint.textContent = rev
+      ? "提案の反映を書き込んでください。変更は下に朱で表示されます。"
+      : "全文コピーで自動的にスナップショットを撮り、朱筆モードに入ります。";
+    if(rev){ baseline = editor.value; renderLiveDiff(); }
+  }
+
+  function enterRevision(){ if(!revision) setMode(true); }
+  function commitRevision(){
+    if(!revision) return;
+    var hunks = diffLines(baseline, editor.value);
+    var w = cur();
+    var now = stamp();
+    var paste = document.getElementById("aiPaste");
+    var aiText = paste.value.trim();
+    if(aiText) w.records.push({time: now, aiReply: aiText});
+    hunks.forEach(function(h){ w.records.push({time: now, before: h.before, after: h.after}); });
+    paste.value = "";
+    document.getElementById("aiPasteWrap").open = false;
+    setMode(false);
+    save(); renderRecords();
+    var msg;
+    if(hunks.length) msg = "朱 "+hunks.length+"件" + (aiText ? "と、AIの回答" : "") + "を記録しました";
+    else if(aiText) msg = "変更なし — AIの回答のみ記録しました（流した提案の控え）";
+    else msg = "変更なし（維持は沈黙が記録）";
+    toast(msg, hunks.length>0 || !!aiText);
+  }
+
+  modeBtn.addEventListener("click", function(){
+    if(revision){ commitRevision(); }
+    else{
+      if(editor.value) takeSnapshot();
+      enterRevision();
+      toast(editor.value ? "スナップショットを保存し、朱筆モードに入りました" : "朱筆モードに入りました", true);
+    }
+  });
+
+  /* ---------- スナップショット ---------- */
+  var suppressCopyDetect = false;
+  editor.addEventListener("copy", function(){
+    if(suppressCopyDetect) return;
+    var selLen = editor.selectionEnd - editor.selectionStart;
+    var total = editor.value.length;
+    if(total > 0 && selLen >= total * 0.95){
+      takeSnapshot();
+      enterRevision();
+      toast("全文コピーを検知 — スナップショットを保存し、朱筆モードに入りました", true);
+    }
+  });
+  function takeSnapshot(){
+    var w = cur();
+    w.snapshots.push({
+      id: "s"+Date.now(),
+      time: stamp(),
+      text: editor.value,
+      chatName: null,
+      chatContent: null
+    });
+    save(); renderSnapshots();
+  }
+  document.getElementById("copyAllBtn").addEventListener("click", function(){
+    var text = editor.value;
+    if(!text){ toast("本文がまだありません", false); return; }
+    function done(){
+      takeSnapshot();
+      enterRevision();
+      toast("全文をコピーしました — スナップショットを保存し、朱筆モードに入りました", true);
+    }
+    function fallback(){
+      suppressCopyDetect = true;
+      editor.focus(); editor.select();
+      try{ document.execCommand("copy"); }catch(e){}
+      editor.setSelectionRange(text.length, text.length);
+      suppressCopyDetect = false;
+      done();
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, fallback);
+    }else{ fallback(); }
+  });
+
+  /* ---------- ちゃっとJSON添付 ---------- */
+  var chatFileInput = document.getElementById("chatFile");
+  var pendingSnapId = null;
+  chatFileInput.addEventListener("change", function(){
+    var f = chatFileInput.files[0];
+    if(!f || !pendingSnapId) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var w = cur();
+      for(var i=0;i<w.snapshots.length;i++){
+        if(w.snapshots[i].id===pendingSnapId){
+          w.snapshots[i].chatName = f.name;
+          w.snapshots[i].chatContent = String(reader.result);
+          break;
+        }
+      }
+      save(); renderSnapshots();
+      toast("ちゃっとを束ねました："+f.name, false);
+    };
+    reader.readAsText(f);
+    chatFileInput.value="";
+  });
+
+  /* ---------- 描画 ---------- */
+  function renderWorks(){
+    workSelect.innerHTML = state.works.map(function(w){
+      return '<option value="'+w.id+'"'+(w.id===state.currentId?' selected':'')+'>'+esc(w.title)+'</option>';
+    }).join("");
+  }
+  function renderSnapshots(){
+    var w = cur();
+    var ul = document.getElementById("snapList");
+    if(!w.snapshots.length){ ul.innerHTML = '<li style="color:var(--quiet)">まだありません。本文を全選択してコピーすると自動で残ります。</li>'; return; }
+    ul.innerHTML = w.snapshots.slice().reverse().map(function(s){
+      var chat = s.chatName
+        ? '<div class="chatTag has">束ねたちゃっと：'+esc(s.chatName)+'</div>'
+        : '<div class="chatTag">ちゃっと未添付</div>';
+      return '<li>'+
+        '<div class="snapHead"><span class="t">'+s.time+'</span>'+
+        '<span class="len">'+s.text.length.toLocaleString()+'字</span>'+
+        '<span class="spacer"></span>'+
+        '<button data-act="attach" data-id="'+s.id+'">ちゃっとを束ねる</button>'+
+        '<button data-act="restore" data-id="'+s.id+'">本文に戻す</button>'+
+        '<button data-act="delsnap" data-id="'+s.id+'">削除</button>'+
+        '</div>'+chat+'</li>';
+    }).join("");
+  }
+  function renderRecords(){
+    var w = cur();
+    var ul = document.getElementById("recList");
+    if(!w.records.length){ ul.innerHTML = '<li style="color:var(--quiet)">まだありません。朱筆モードで変更し、通常へ戻すと確定します。</li>'; return; }
+    ul.innerHTML = w.records.slice().reverse().map(function(r, idxRev){
+      var idx = w.records.length - 1 - idxRev;
+      var body;
+      if(r.aiReply) body = '<details class="aiReply"><summary>もとになったAIの回答</summary><div class="aiReplyBody">'+esc(r.aiReply)+'</div></details>';
+      else if(r.before && r.after) body = '<span class="old">'+esc(r.before)+'</span><span class="arrow">→</span><span class="new">'+esc(r.after)+'</span>';
+      else if(r.before) body = '<span class="old">'+esc(r.before)+'</span><span class="arrow">→</span><span class="new">（削除）</span>';
+      else body = '<span class="arrow">＋</span><span class="only">'+esc(r.after)+'</span>';
+      return '<li class="recItem"><div class="meta">['+r.time+']<button data-act="delrec" data-idx="'+idx+'">削除</button></div>'+body+'</li>';
+    }).join("");
+  }
+  document.getElementById("snapList").addEventListener("click", listHandler);
+  document.getElementById("recList").addEventListener("click", listHandler);
+  function listHandler(e){
+    var btn = e.target.closest("button"); if(!btn) return;
+    var act = btn.getAttribute("data-act");
+    var w = cur();
+    if(act==="attach"){ pendingSnapId = btn.getAttribute("data-id"); chatFileInput.click(); }
+    if(act==="restore"){
+      var s = w.snapshots.find(function(x){return x.id===btn.getAttribute("data-id");});
+      if(s && confirm("現在の本文をこのスナップショットの内容に戻しますか？\n（現在の本文は失われます。心配なら先に全データを保存）")){
+        editor.value = s.text; w.text = s.text; save(); updateCounts(); toast("本文を戻しました", false);
+      }
+    }
+    if(act==="delsnap"){
+      if(confirm("このスナップショットを削除しますか？")){
+        w.snapshots = w.snapshots.filter(function(x){return x.id!==btn.getAttribute("data-id");});
+        save(); renderSnapshots();
+      }
+    }
+    if(act==="delrec"){
+      var idx = parseInt(btn.getAttribute("data-idx"),10);
+      if(confirm("この改稿記録を削除しますか？")){
+        w.records.splice(idx,1); save(); renderRecords();
+      }
+    }
+  }
+
+  /* ---------- 書き出し ---------- */
+  function pad(n){ return n<10 ? "0"+n : ""+n; }
+  function stamp(){
+    var d = new Date();
+    return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+  function download(filename, text, type){
+    var blob = new Blob([text], {type: type||"text/plain;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+  document.getElementById("exportMdBtn").addEventListener("click", function(){
+    var w = cur();
+    var md = "# 改稿記録 — " + w.title + "\n\n";
+    md += "原稿用紙設定: " + w.cols + "字 × " + w.rows + "行\n";
+    md += "書き出し日時: " + stamp() + "\n\n";
+    md += "## スナップショット\n\n";
+    if(w.snapshots.length){
+      w.snapshots.forEach(function(s){
+        md += "- ["+s.time+"] "+s.text.length.toLocaleString()+"字"+(s.chatName? "（ちゃっと: "+s.chatName+"）":"（ちゃっと未添付）")+"\n";
+      });
+    }else md += "- なし\n";
+    md += "\n## 改稿（提案受け入れによる変更）\n\n";
+    if(w.records.length){
+      w.records.forEach(function(r){
+        if(r.aiReply){
+          md += "- ["+r.time+"] 〔もとになったAIの回答〕\n";
+          md += r.aiReply.split("\n").map(function(l){ return "  > "+l; }).join("\n") + "\n";
+          return;
+        }
+        var before = r.before || "（追加）";
+        var after = r.after || "（削除）";
+        md += "- ["+r.time+"] "+before.replace(/\n/g," ⏎ ")+" → "+after.replace(/\n/g," ⏎ ")+"\n";
+      });
+    }else md += "- なし（全文維持）\n";
+    md += "\n---\n変更は朱筆モードでのみ記録される。維持された箇所は原文のまま＝作者の筆のまま。\n";
+    download(w.title.replace(/[\\/:*?"<>|]/g,"_") + "_改稿記録.md", md, "text/markdown;charset=utf-8");
+    toast("Markdownを書き出しました", false);
+  });
+  document.getElementById("exportAllBtn").addEventListener("click", function(){
+    var d = new Date();
+    var name = "kaikou_memo_" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + ".json";
+    download(name, JSON.stringify(state, null, 1), "application/json;charset=utf-8");
+    toast("全データを書き出しました", false);
+  });
+  document.getElementById("quickSaveBtn").addEventListener("click", function(){
+    document.getElementById("exportAllBtn").click();
+  });
+  document.getElementById("importAllBtn").addEventListener("click", function(){
+    document.getElementById("importFile").click();
+  });
+  document.getElementById("importFile").addEventListener("change", function(){
+    var f = this.files[0]; if(!f) return;
+    var reader = new FileReader();
+    reader.onload = async function(){
+      try{
+        var data = JSON.parse(String(reader.result));
+        if(!data.works || !data.works.length) throw new Error("形式が違います");
+        if(confirm("読み込むと、クラウドの現在のデータを置き換えます。よろしいですか？")){
+          state = data;
+          state.currentId = state.currentId || state.works[0].id;
+          try{
+            await saveAllToCloud();
+            toast("読み込み、クラウドに保存しました ☁", false);
+          }catch(e){
+            toast("読み込みましたが、クラウドへの保存に失敗しました", false);
+          }
+          initFromState();
+        }
+      }catch(e){ alert("読み込めませんでした：JSONの形式を確認してください。"); }
+    };
+    reader.readAsText(f);
+    this.value="";
+  });
+
+  /* ---------- 作品の操作 ---------- */
+  document.getElementById("newWorkBtn").addEventListener("click", async function(){
+    var title = prompt("新しい作品の名前", "無題の原稿");
+    if(title===null) return;
+    var w = newWork(title || "無題の原稿");
+    state.works.push(w); state.currentId = w.id;
+    save(); initFromState();
+  });
+  document.getElementById("renameWorkBtn").addEventListener("click", function(){
+    var w = cur();
+    var title = prompt("作品名", w.title);
+    if(title===null || !title.trim()) return;
+    w.title = title.trim(); save(); renderWorks();
+  });
+  workSelect.addEventListener("change", function(){
+    if(revision && !confirm("朱筆モード中です。切り替えると未確定の変更は記録されません。切り替えますか？")){
+      workSelect.value = state.currentId; return;
+    }
+    setMode(false);
+    cur().text = editor.value;
+    state.currentId = workSelect.value;
+    save(); initFromState();
+  });
+
+  /* ---------- 設定 ---------- */
+  var colsInput = document.getElementById("colsInput");
+  var rowsInput = document.getElementById("rowsInput");
+  colsInput.addEventListener("change", function(){ cur().cols = Math.max(10, parseInt(colsInput.value,10)||20); save(); updateCounts(); });
+  rowsInput.addEventListener("change", function(){ cur().rows = Math.max(10, parseInt(rowsInput.value,10)||20); save(); updateCounts(); });
+  document.getElementById("presetSelect").addEventListener("change", function(){
+    if(!this.value) return;
+    var p = this.value.split("x");
+    cur().cols = parseInt(p[0],10); cur().rows = parseInt(p[1],10);
+    colsInput.value = cur().cols; rowsInput.value = cur().rows;
+    save(); updateCounts(); this.value="";
+  });
+
+  /* ---------- タブ ---------- */
+  var tabWrite = document.getElementById("tabWrite");
+  var tabRecords = document.getElementById("tabRecords");
+  tabWrite.addEventListener("click", function(){ switchTab(true); });
+  tabRecords.addEventListener("click", function(){ switchTab(false); });
+  function switchTab(write){
+    tabWrite.classList.toggle("active", write);
+    tabRecords.classList.toggle("active", !write);
+    document.getElementById("writeView").classList.toggle("active", write);
+    document.getElementById("recordsView").classList.toggle("active", !write);
+    if(!write){ renderSnapshots(); renderRecords(); }
+  }
+
+  /* ---------- 入力 ---------- */
+  editor.addEventListener("input", function(){
+    cur().text = editor.value;
+    updateCounts(); save(); renderLiveDiff();
+  });
+
+  /* ---------- タブを閉じる前にベストエフォートで保存 ---------- */
+  window.addEventListener("beforeunload", function(){
+    if(currentUser){
+      try{ saveCurrentToCloud(); }catch(e){}
+    }
+  });
+
+  /* ---------- initFromState（外から呼べるように） ---------- */
+  window._initFromState = function(){
+    var w = cur();
+    editor.value = w.text || "";
+    colsInput.value = w.cols; rowsInput.value = w.rows;
+    renderWorks(); renderSnapshots(); renderRecords(); updateCounts();
+  };
+}
+
+/* ---------- initFromState（トップレベルから呼ぶ） ---------- */
+function initFromState(){
+  if(window._initFromState) window._initFromState();
+}
+
+/* ---------- トースト（setupApp前でも使えるように外に） ---------- */
+var toastEl = document.getElementById("toast"), toastTimer=null;
+function toast(msg, shu){
+  toastEl.textContent = msg;
+  toastEl.classList.toggle("shu", !!shu);
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
+}
+</script>
+</body>
+</html>
