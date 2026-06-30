@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>13フェイズ シナリオジェネレーター</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A1E;color:#E8E8F0;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  padding:20px 16px 60px;min-height:100vh}
+h1{text-align:center;font-size:22px;font-weight:800;letter-spacing:2px;margin-bottom:4px}
+.subtitle{text-align:center;font-size:10px;letter-spacing:3px;color:#555;margin-bottom:6px}
+.sub2{text-align:center;font-size:11px;color:#555;margin-bottom:28px}
+.gold{color:#D4AC0D}
+.gen-btn{display:block;width:100%;max-width:480px;margin:0 auto 28px;padding:14px;
+  background:linear-gradient(135deg,#B8860B,#D4AC0D,#B8860B);
+  border:none;border-radius:10px;color:#000;font-weight:800;font-size:16px;
+  letter-spacing:2px;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .15s}
+.gen-btn:hover{opacity:.88;transform:scale(1.02)}
+.gen-btn.small{font-size:14px;letter-spacing:1px;padding:12px;margin-top:16px}
+.copy-btn{display:block;width:100%;max-width:480px;margin:0 auto 16px;padding:12px;
+  background:#13132A;border:1px solid #2A2A4A;border-radius:10px;color:#888;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.copy-btn.ok{background:#1A4A2A;border-color:#2A8A4A;color:#5CDD8B}
+.section-title{font-size:10px;letter-spacing:3px;color:#555;margin-bottom:12px}
+.char-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.char-card{flex:1 1 140px;background:#12122A;border:1px solid #1E1E3A;border-radius:8px;padding:10px 12px}
+.card-label{font-size:10px;color:#555;margin-bottom:4px}
+.card-text{font-size:13px;line-height:1.5;color:#DDD;margin-bottom:8px}
+.card-footer{display:flex;justify-content:space-between;align-items:center}
+.badge{font-size:10px;padding:2px 7px;border-radius:99px}
+.badge.narou{background:#4A1020;color:#FF7096;border:1px solid #7A2040}
+.badge.hanyo{background:#0D2E1A;color:#5CDD8B;border:1px solid #1A5030}
+.reroll{font-size:14px;cursor:pointer;transition:opacity .15s,transform .2s;user-select:none}
+.reroll:hover{opacity:.7;transform:rotate(30deg)}
+.act-block{margin-bottom:24px}
+.act-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px}
+.act-label{font-size:13px;font-weight:800}
+.act-sub{font-size:10px;color:#555}
+.phase-card{border-radius:0 8px 8px 0;padding:10px 14px;display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.phase-num{flex-shrink:0;width:32px;height:32px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.phase-info{flex:1}
+.phase-name{font-size:11px;font-weight:700;margin-bottom:3px}
+.phase-text{font-size:14px;line-height:1.6;color:#DDD}
+.phase-side{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.phase-side .reroll{font-size:14px}
+.empty-msg{text-align:center;color:#2A2A4A;font-size:13px;margin-top:40px;line-height:2}
+#result{display:none}
+</style>
+</head>
+<body>
+<div class="subtitle">STORY STRUCTURE</div>
+<h1>13フェイズ <span class="gold">シナリオ</span> ジェネレーター</h1>
+<div class="sub2">なろう系 × 汎用ストーリー</div>
+
+<button class="gen-btn" onclick="generate()">🎲　シナリオを生成する</button>
+
+<div id="result">
+  <div class="section-title">▼ キャラクター設定</div>
+  <div class="char-grid" id="char-grid"></div>
+  <div id="acts"></div>
+  <button class="copy-btn" id="copy-btn" onclick="copyAll()">📋 シナリオ全文をコピー</button>
+  <button class="gen-btn small" onclick="generate()">🎲　もう一度生成する</button>
+</div>
+
+<div class="empty-msg" id="empty-msg">ボタンを押してシナリオを生成してください<br>🎲 各フェイズは個別に振り直せます</div>
+
+<script>
+const R = arr => arr[Math.floor(Math.random()*arr.length)];
+
+const CHAR = {
+  who:   {label:"主人公",icon:"👤",opts:[
+    {t:"チートスキル持ちの転生者",tp:"なろう"},
+    {t:"理不尽に追放された元英雄",tp:"なろう"},
+    {t:"ハズレ扱いされた真の才能の持ち主",tp:"なろう"},
+    {t:"ブラック企業から異世界へ飛んだ社畜",tp:"なろう"},
+    {t:"記憶を持たない謎の少女",tp:"汎用"},
+    {t:"力を持ちながら戦えない者",tp:"汎用"},
+    {t:"孤独を抱えた元英雄",tp:"汎用"},
+    {t:"復讐を誓った若き戦士",tp:"汎用"},
+  ]},
+  goal:  {label:"目標",icon:"🎯",opts:[
+    {t:"最強になって無双する",tp:"なろう"},
+    {t:"追放した連中を見返す",tp:"なろう"},
+    {t:"異世界で成り上がり、帰還する",tp:"なろう"},
+    {t:"自分だけのスキルで生き抜く",tp:"なろう"},
+    {t:"大切な人を守り抜く",tp:"汎用"},
+    {t:"失われた真実を取り戻す",tp:"汎用"},
+    {t:"世界を脅かす何かを止める",tp:"汎用"},
+    {t:"自分の存在意義を見つける",tp:"汎用"},
+  ]},
+  world: {label:"舞台",icon:"🌍",opts:[
+    {t:"職業とスキルが存在するハイファンタジー異世界",tp:"なろう"},
+    {t:"現代日本にダンジョンが出現した世界",tp:"なろう"},
+    {t:"貴族と魔法使いが共存する学園世界",tp:"なろう"},
+    {t:"神々が実在し、加護を与える異世界",tp:"なろう"},
+    {t:"中世ヨーロッパ風の騎士と王国の世界",tp:"汎用"},
+    {t:"魔法が失われた荒廃した近未来",tp:"汎用"},
+    {t:"複数の勢力が覇権を争う大陸",tp:"汎用"},
+    {t:"呪いが世界そのものを蝕んでいる",tp:"汎用"},
+  ]},
+  enemy: {label:"敵・障害",icon:"⚔️",opts:[
+    {t:"復活した魔王と、その裏で暗躍する黒幕",tp:"なろう"},
+    {t:"主人公を追放した元仲間・組織",tp:"なろう"},
+    {t:"チートを持つライバル転生者",tp:"なろう"},
+    {t:"世界を支配しようとする腐敗した貴族",tp:"なろう"},
+    {t:"圧倒的な力を持つ謎の侵略者",tp:"汎用"},
+    {t:"かつての仲間・師匠",tp:"汎用"},
+    {t:"制度・呪い・見えない敵",tp:"汎用"},
+    {t:"主人公自身の過去と弱さ",tp:"汎用"},
+  ]},
+  theme: {label:"テーマ",icon:"✨",opts:[
+    {t:"弱者の逆転と真の実力の証明",tp:"なろう"},
+    {t:"正体不明だった力の覚醒と成長",tp:"なろう"},
+    {t:"仲間との出会いと本当の居場所",tp:"なろう"},
+    {t:"過去の理不尽を超えて得る幸福",tp:"なろう"},
+    {t:"守ることの意味とその代償",tp:"汎用"},
+    {t:"正義と悪の曖昧さ、それでも選ぶこと",tp:"汎用"},
+    {t:"変化を受け入れ、前へ進む強さ",tp:"汎用"},
+    {t:"諦めないことの意味と限界",tp:"汎用"},
+  ]},
+};
+
+const PHASES = [
+  {n:0,name:"背景",act:1,opts:[
+    {t:"現代日本のブラック企業に勤める31歳",tp:"なろう"},
+    {t:"ゲームに没頭する平凡な高校生",tp:"なろう"},
+    {t:"スキルがハズレで燻る冒険者見習い",tp:"なろう"},
+    {t:"勘当された貴族の三男坊",tp:"なろう"},
+    {t:"戦争で村を焼かれた若者",tp:"汎用"},
+    {t:"記憶を失って荒野で目覚めた旅人",tp:"汎用"},
+    {t:"落ちぶれた元天才魔法使い",tp:"汎用"},
+    {t:"辺境の小国の名もなき兵士",tp:"汎用"},
+  ]},
+  {n:1,name:"日常",act:1,opts:[
+    {t:"才能を認められず、こき使われる毎日",tp:"なろう"},
+    {t:"最底辺の依頼しか受けられない灰色の日々",tp:"なろう"},
+    {t:"家族に疎まれながら一人で生きている",tp:"なろう"},
+    {t:"普通の幸せはあるが、何かが足りない感覚",tp:"なろう"},
+    {t:"小さな幸せを守りながらの平和な暮らし",tp:"汎用"},
+    {t:"夢を諦めかけている灰色の毎日",tp:"汎用"},
+    {t:"仲間を失いながら続く消耗戦",tp:"汎用"},
+    {t:"正体を隠しながら生きる孤独な生活",tp:"汎用"},
+  ]},
+  {n:2,name:"事件",act:1,opts:[
+    {t:"トラックに轢かれ、気づいたら異世界にいた",tp:"なろう"},
+    {t:"パーティーから理不尽に追放される",tp:"なろう"},
+    {t:"ダンジョンで封印が解かれ、魔王が復活",tp:"なろう"},
+    {t:"ハズレだったスキルの真の力が突然覚醒",tp:"なろう"},
+    {t:"平和を脅かす謎の侵略者が現れる",tp:"汎用"},
+    {t:"守るべき存在が何者かに狙われる",tp:"汎用"},
+    {t:"禁断の真実を記した書物を見つけてしまう",tp:"汎用"},
+    {t:"かつての誓いが、現実として返ってくる",tp:"汎用"},
+  ]},
+  {n:3,name:"決意",act:1,opts:[
+    {t:"今度こそ最強になって無双してやる",tp:"なろう"},
+    {t:"俺を追放した連中を必ず見返す",tp:"なろう"},
+    {t:"この世界で一番強くなる",tp:"なろう"},
+    {t:"愛する人を守るために何でもする",tp:"なろう"},
+    {t:"逃げるのをやめて立ち向かうと決める",tp:"汎用"},
+    {t:"知りたくなかった真実でも、知りに行く",tp:"汎用"},
+    {t:"誰かのために戦うことを選ぶ",tp:"汎用"},
+    {t:"過去の自分を超えると誓う",tp:"汎用"},
+  ]},
+  {n:4,name:"苦境",act:2,opts:[
+    {t:"敵が予想外に強く、まったく歯が立たない",tp:"なろう"},
+    {t:"仲間と思っていた人物に裏切られる",tp:"なろう"},
+    {t:"スキルが制限され身動きが取れなくなる",tp:"なろう"},
+    {t:"敵の本拠地に乗り込むも返り討ちに",tp:"なろう"},
+    {t:"孤立無援で完全に追い詰められる",tp:"汎用"},
+    {t:"守りたいものが敵の人質に取られる",tp:"汎用"},
+    {t:"自分の力の限界を思い知らされる",tp:"汎用"},
+    {t:"信じていた仲間が突然消えてしまう",tp:"汎用"},
+  ]},
+  {n:5,name:"助け",act:2,opts:[
+    {t:"謎の師匠キャラが突然現れて導いてくれる",tp:"なろう"},
+    {t:"ハズレだったスキルの真の力が判明する",tp:"なろう"},
+    {t:"神様から追加のチート能力を付与される",tp:"なろう"},
+    {t:"思わぬ協力者が強力なアイテムを提供",tp:"なろう"},
+    {t:"昔の仲間が最悪のタイミングで助けに来る",tp:"汎用"},
+    {t:"敵だと思っていた存在が実は鍵を持っていた",tp:"汎用"},
+    {t:"先代の英雄が残した記録に答えがあった",tp:"汎用"},
+    {t:"傷つきながらも共に戦う存在が現れる",tp:"汎用"},
+  ]},
+  {n:6,name:"成長",act:2,opts:[
+    {t:"特訓でレベルと技術が急速に成長する",tp:"なろう"},
+    {t:"独自の戦術を編み出し、敵を翻弄できるようになる",tp:"なろう"},
+    {t:"仲間を集め、チームとして機能し始める",tp:"なろう"},
+    {t:"封印されていた固有スキルを使いこなす",tp:"なろう"},
+    {t:"弱さを認めた先に本当の強さを見つける",tp:"汎用"},
+    {t:"仲間との絆が、戦う力になる",tp:"汎用"},
+    {t:"過去の失敗が今の知恵になっていると気づく",tp:"汎用"},
+    {t:"敵の戦法を研究し、完璧な対策を立てる",tp:"汎用"},
+  ]},
+  {n:7,name:"転換",act:2,opts:[
+    {t:"ラスボスの真の目的が明かされ、事態が一変",tp:"なろう"},
+    {t:"世界の真実が明らかになり、目的が変わる",tp:"なろう"},
+    {t:"親友が実は黒幕側の人間だったと判明",tp:"なろう"},
+    {t:"敵が実は同じ転生者だったと判明",tp:"なろう"},
+    {t:"戦いの本当の意味が明らかになる",tp:"汎用"},
+    {t:"正義と悪の境界線が、突然消える",tp:"汎用"},
+    {t:"全ての出来事が繋がり、真相が見える",tp:"汎用"},
+    {t:"守ろうとしていたものの正体が変わる",tp:"汎用"},
+  ]},
+  {n:8,name:"試練",act:2,opts:[
+    {t:"最強クラスの敵との予期せぬ遭遇",tp:"なろう"},
+    {t:"魔王の本体がついに動き出す",tp:"なろう"},
+    {t:"仲間全員がやられ、一人になる",tp:"なろう"},
+    {t:"主人公の存在意義そのものが否定される",tp:"なろう"},
+    {t:"積み上げてきたものが一度全て崩れる",tp:"汎用"},
+    {t:"守るか進むかの究極の選択",tp:"汎用"},
+    {t:"心が折れる寸前まで追い詰められる",tp:"汎用"},
+    {t:"かつての仲間と刃を交えることになる",tp:"汎用"},
+  ]},
+  {n:9,name:"破滅",act:2,opts:[
+    {t:"完全敗北、スキルも失い何もできない状態に",tp:"なろう"},
+    {t:"仲間が全員倒れ、世界が絶望に包まれる",tp:"なろう"},
+    {t:"自分だけが生き残ってしまう罪悪感",tp:"なろう"},
+    {t:"「俺には無理だった」と諦めかける",tp:"なろう"},
+    {t:"全てを失い、立ち上がる理由さえ見えない",tp:"汎用"},
+    {t:"敵に全てを奪われた後の、深い虚無",tp:"汎用"},
+    {t:"闇の底で一人、孤独と向き合う時間",tp:"汎用"},
+    {t:"絶望の中で、それでも続ける理由を探す",tp:"汎用"},
+  ]},
+  {n:10,name:"契機",act:2,opts:[
+    {t:"倒れた仲間の声が届き、立ち上がる",tp:"なろう"},
+    {t:"封印が完全解除、真の力が解放される",tp:"なろう"},
+    {t:"諦めたくないという感情が能力を覚醒させる",tp:"なろう"},
+    {t:"予想外の人物がギリギリで助けに来る",tp:"なろう"},
+    {t:"守るべきものの笑顔を、ふと思い出す",tp:"汎用"},
+    {t:"折れかけた心に、かつての誓いが響く",tp:"汎用"},
+    {t:"残った一つの希望が、全てを変える",tp:"汎用"},
+    {t:"敵の言葉が逆に、立ち上がる力になる",tp:"汎用"},
+  ]},
+  {n:11,name:"対決",act:3,opts:[
+    {t:"全てをかけたラスボスとの最終決戦",tp:"なろう"},
+    {t:"因縁の相手との一対一の決着",tp:"なろう"},
+    {t:"覚醒した力で、格上の敵に挑む",tp:"なろう"},
+    {t:"仲間全員の力を合わせた総力戦",tp:"なろう"},
+    {t:"運命の相手と、全てを懸けて向き合う",tp:"汎用"},
+    {t:"戦いではなく、言葉で決着をつけようとする",tp:"汎用"},
+    {t:"ずっと逃げてきたものと初めて正面から向き合う",tp:"汎用"},
+    {t:"仲間の想いを背負って、一歩踏み出す",tp:"汎用"},
+  ]},
+  {n:12,name:"排除",act:3,opts:[
+    {t:"魔王・黒幕を完全に倒し、脅威が消える",tp:"なろう"},
+    {t:"ざまぁ完了、かつての敵が敗北を認める",tp:"なろう"},
+    {t:"悪の組織が内部から崩壊する",tp:"なろう"},
+    {t:"世界に巣食う呪いが、ついに解ける",tp:"なろう"},
+    {t:"長年の脅威が終わり、平和が戻り始める",tp:"汎用"},
+    {t:"真実が明るみに出て、不正が暴かれる",tp:"汎用"},
+    {t:"失われていた大切なものが取り戻される",tp:"汎用"},
+    {t:"敵が改心し、共に未来を目指すことになる",tp:"汎用"},
+  ]},
+  {n:13,name:"満足",act:3,opts:[
+    {t:"最強の称号を得て、穏やかな日常が戻る",tp:"なろう"},
+    {t:"仲間たちとの、新たな冒険が始まる",tp:"なろう"},
+    {t:"故郷に凱旋し、家族と再会する",tp:"なろう"},
+    {t:"「やっと普通に生きられる」という静かな幸福",tp:"なろう"},
+    {t:"失ったものとの別れを経て、前を向く",tp:"汎用"},
+    {t:"平和な世界で、新たな目標を見つける",tp:"汎用"},
+    {t:"旅の終わりと、次の始まりが重なる瞬間",tp:"汎用"},
+    {t:"全ての経験が、今の自分を作ったと気づく",tp:"汎用"},
+  ]},
+];
+
+const ACTS = [
+  {n:1,label:"第一幕",sub:"発端・対立",color:"#C0392B",bg:"rgba(192,57,43,0.08)"},
+  {n:2,label:"第二幕",sub:"葛藤",color:"#E67E22",bg:"rgba(230,126,34,0.08)"},
+  {n:3,label:"第三幕",sub:"変化・満足",color:"#D4AC0D",bg:"rgba(212,172,13,0.08)"},
+];
+
+let state = {};
+
+function badge(tp){
+  return `<span class="badge ${tp==='なろう'?'narou':'hanyo'}">${tp}</span>`;
+}
+
+function rerollChar(key){
+  state.chars[key] = R(CHAR[key].opts);
+  renderChar(key);
+}
+
+function rerollPhase(n){
+  state.phases[n] = R(PHASES.find(p=>p.n===n).opts);
+  renderPhase(n);
+}
+
+function renderChar(key){
+  const el = document.getElementById('char-'+key);
+  if(!el) return;
+  const c = state.chars[key];
+  el.querySelector('.card-text').textContent = c.t;
+  el.querySelector('.badge-wrap').innerHTML = badge(c.tp);
+}
+
+function renderPhase(n){
+  const el = document.getElementById('phase-'+n);
+  if(!el) return;
+  const c = state.phases[n];
+  el.querySelector('.phase-text').textContent = c.t;
+  el.querySelector('.badge-wrap').innerHTML = badge(c.tp);
+}
+
+function generate(){
+  state.chars={};
+  Object.keys(CHAR).forEach(k=>{ state.chars[k]=R(CHAR[k].opts); });
+  state.phases={};
+  PHASES.forEach(p=>{ state.phases[p.n]=R(p.opts); });
+  render();
+  document.getElementById('result').style.display='block';
+  document.getElementById('empty-msg').style.display='none';
+}
+
+function render(){
+  // Char grid
+  const cg = document.getElementById('char-grid');
+  cg.innerHTML = Object.entries(CHAR).map(([key,def])=>{
+    const c = state.chars[key];
+    return `<div class="char-card" id="char-${key}">
+      <div class="card-label">${def.icon} ${def.label}</div>
+      <div class="card-text">${c.t}</div>
+      <div class="card-footer">
+        <span class="badge-wrap">${badge(c.tp)}</span>
+        <span class="reroll" onclick="rerollChar('${key}')">🎲</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Acts
+  const acts = document.getElementById('acts');
+  acts.innerHTML = ACTS.map(a=>{
+    const ps = PHASES.filter(p=>p.act===a.n);
+    return `<div class="act-block">
+      <div class="act-header" style="border-bottom:2px solid ${a.color}">
+        <span class="act-label" style="color:${a.color}">${a.label}</span>
+        <span class="act-sub">【${a.sub}】</span>
+      </div>
+      ${ps.map(p=>{
+        const c = state.phases[p.n];
+        return `<div class="phase-card" id="phase-${p.n}"
+          style="background:${a.bg};border:1px solid ${a.color}22;border-left:3px solid ${a.color}">
+          <div class="phase-num" style="background:${a.color}22;color:${a.color}">${p.n}</div>
+          <div class="phase-info">
+            <div class="phase-name" style="color:${a.color}">${p.name}</div>
+            <div class="phase-text">${c.t}</div>
+          </div>
+          <div class="phase-side">
+            <span class="badge-wrap">${badge(c.tp)}</span>
+            <span class="reroll" onclick="rerollPhase(${p.n})">🎲</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  // Reset copy btn
+  const cb = document.getElementById('copy-btn');
+  cb.className='copy-btn';
+  cb.textContent='📋 シナリオ全文をコピー';
+}
+
+function copyAll(){
+  const charText = Object.entries(CHAR)
+    .map(([k,v])=>`【${v.label}】${state.chars[k].t}`).join('\n');
+  const phaseText = PHASES
+    .map(p=>`${p.n}. ${p.name}：${state.phases[p.n].t}`).join('\n');
+  const text = `=== シナリオ骨格 ===\n\n▼ キャラクター設定\n${charText}\n\n▼ 13フェイズ\n${phaseText}`;
+  navigator.clipboard.writeText(text).then(()=>{
+    const cb = document.getElementById('copy-btn');
+    cb.className='copy-btn ok';
+    cb.textContent='✓ コピーしました！';
+    setTimeout(()=>{cb.className='copy-btn';cb.textContent='📋 シナリオ全文をコピー';},2000);
+  });
+}
+</script>
+</body>
+</html>
