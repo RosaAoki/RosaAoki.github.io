@@ -524,7 +524,7 @@ function setupApp(){
         document.getElementById("saveState").textContent="☁ 保存済み";
       }catch(e){
         console.error("Save error:", e);
-        document.getElementById("saveState").textContent="保存エラー";
+        document.getElementById("saveState").textContent="保存エラー: "+(e.code||e.name||e.message);
       }
     },1200);
   }
