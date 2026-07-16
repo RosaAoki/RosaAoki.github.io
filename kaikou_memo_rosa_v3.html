@@ -709,16 +709,18 @@ function setupApp(){
     }
   });
   function takeSnapshot(){
-    var w = cur();
-    w.snapshots.push({
-      id: "s"+Date.now(),
-      time: stamp(),
-      text: editor.value,
-      chatName: null,
-      chatContent: null
-    });
-    save(); renderSnapshots();
-  }
+  var w = cur();
+  var s = { id:"s"+Date.now(), time:stamp(), text:editor.value, chatName:null, chatContent:null };
+  w.snapshots.push(s);
+  renderSnapshots();
+  document.getElementById("saveState").textContent = "保存中…";
+  saveSnapshotToCloud(w.id, s).then(function(){
+    document.getElementById("saveState").textContent = "☁ 保存済み";
+  }, function(e){
+    console.error("Snapshot save error:", e);
+    document.getElementById("saveState").textContent = "スナップショット保存エラー: "+(e.code||e.name||e.message);
+  });
+}
   document.getElementById("copyAllBtn").addEventListener("click", function(){
     var text = editor.value;
     if(!text){ toast("本文がまだありません", false); return; }
