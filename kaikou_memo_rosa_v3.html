@@ -404,9 +404,45 @@ function cur(){
    ========================================================== */
 function metaRef(){ return doc(db, "users", currentUser.uid, "data", "meta"); }
 function workRef(id){ return doc(db, "users", currentUser.uid, "works", id); }
+function snapsCol(wid){ return collection(db, "users", currentUser.uid, "works", wid, "snaps"); }
+function snapRef(wid, sid){ return doc(db, "users", currentUser.uid, "works", wid, "snaps", sid); }
 
-// JSON.parse(JSON.stringify(x)) で undefined 除去（Firestore対策）
 function clean(obj){ return JSON.parse(JSON.stringify(obj)); }
+function byteLen(s){ return new TextEncoder().encode(s).length; }
+function stripSnaps(w){
+  var o = {};
+  for(var k in w){ if(k !== "snapshots") o[k] = w[k]; }
+  return o;
+}
+function snapOrder(s){ return parseInt(String(s.id).replace(/[^0-9]/g,""), 10) || 0; }
+
+async function loadWork(id){
+  var ws = await getDoc(workRef(id));
+  if(!ws.exists()) return null;
+  var w = ws.data();
+  var legacy = Array.isArray(w.snapshots) ? w.snapshots : null;
+  w.snapshots = [];
+  var qs = await getDocs(snapsCol(id));
+  qs.forEach(function(d){ w.snapshots.push(d.data()); });
+
+  if(legacy && legacy.length){
+    for(var i=0;i<legacy.length;i++){
+      var s = legacy[i];
+      if(!s || !s.id) continue;
+      var already = w.snapshots.some(function(x){ return x.id === s.id; });
+      if(already) continue;
+      try{
+        await setDoc(snapRef(id, s.id), clean(s));
+        w.snapshots.push(s);
+      }catch(e){
+        console.error("Snapshot migrate failed:", s.id, e);
+      }
+    }
+    await setDoc(workRef(id), clean(stripSnaps(w)));
+  }
+  w.snapshots.sort(function(a,b){ return snapOrder(a) - snapOrder(b); });
+  return w;
+}
 
 async function loadFromCloud(){
   var snap = await getDoc(metaRef());
@@ -414,8 +450,8 @@ async function loadFromCloud(){
     var meta = snap.data();
     state = { works:[], currentId: meta.currentId };
     for(var i=0; i<meta.workList.length; i++){
-      var ws = await getDoc(workRef(meta.workList[i].id));
-      if(ws.exists()) state.works.push(ws.data());
+      var w = await loadWork(meta.workList[i].id);
+      if(w) state.works.push(w);
     }
     if(!state.works.length){
       state.works.push(newWork("無題の原稿"));
@@ -423,7 +459,6 @@ async function loadFromCloud(){
       await saveAllToCloud();
     }
   }else{
-    // 初回：localStorageから移行を試みる
     var migrated = false;
     try{
       var ls = localStorage.getItem("kaikou_memo_rosa_v1");
@@ -448,28 +483,44 @@ async function loadFromCloud(){
   return false;
 }
 
-async function saveAllToCloud(){
+async function saveMeta(){
   await setDoc(metaRef(), {
     currentId: state.currentId,
     workList: state.works.map(function(w){ return {id:w.id, title:w.title}; })
   });
+}
+
+async function saveAllToCloud(){
+  await saveMeta();
   for(var i=0;i<state.works.length;i++){
-    await setDoc(workRef(state.works[i].id), clean(state.works[i]));
+    var w = state.works[i];
+    await setDoc(workRef(w.id), clean(stripSnaps(w)));
+    var snaps = w.snapshots || [];
+    for(var j=0;j<snaps.length;j++){
+      await setDoc(snapRef(w.id, snaps[j].id), clean(snaps[j]));
+    }
   }
+}
+
+async function saveSnapshotToCloud(wid, s){
+  var bytes = byteLen(JSON.stringify(s));
+  if(bytes > 900000){
+    throw Object.assign(new Error("snapshot too large"), {code:"snapshot-too-large", kb:Math.round(bytes/1024)});
+  }
+  await setDoc(snapRef(wid, s.id), clean(s));
 }
 
 async function saveCurrentToCloud(){
   var w = cur();
-  var json = JSON.stringify(w);
-  if(json.length > 900000){
-    document.getElementById("saveState").textContent = "⚠ データが大きすぎます — スナップショットを整理してください";
+  var body = stripSnaps(w);
+  var bytes = byteLen(JSON.stringify(body));
+  if(bytes > 900000){
+    document.getElementById("saveState").textContent =
+      "⚠ 本文＋記録が大きすぎます（"+Math.round(bytes/1024)+"KB）— 改稿の記録を整理してください";
     return;
   }
-  await setDoc(workRef(w.id), clean(w));
-  await setDoc(metaRef(), {
-    currentId: state.currentId,
-    workList: state.works.map(function(w){ return {id:w.id, title:w.title}; })
-  });
+  await setDoc(workRef(w.id), clean(body));
+  await saveMeta();
 }
 
 /* ==========================================================
