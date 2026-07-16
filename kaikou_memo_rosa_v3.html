@@ -721,6 +721,7 @@ function setupApp(){
     document.getElementById("saveState").textContent = "スナップショット保存エラー: "+(e.code||e.name||e.message);
   });
 }
+  
   document.getElementById("copyAllBtn").addEventListener("click", function(){
     var text = editor.value;
     if(!text){ toast("本文がまだありません", false); return; }
@@ -749,18 +750,26 @@ function setupApp(){
     var f = chatFileInput.files[0];
     if(!f || !pendingSnapId) return;
     var reader = new FileReader();
-    reader.onload = function(){
-      var w = cur();
-      for(var i=0;i<w.snapshots.length;i++){
-        if(w.snapshots[i].id===pendingSnapId){
-          w.snapshots[i].chatName = f.name;
-          w.snapshots[i].chatContent = String(reader.result);
-          break;
-        }
-      }
-      save(); renderSnapshots();
-      toast("ちゃっとを束ねました："+f.name, false);
-    };
+reader.onload = function(){
+  var w = cur();
+  var target = null;
+  for(var i=0;i<w.snapshots.length;i++){
+    if(w.snapshots[i].id===pendingSnapId){ target = w.snapshots[i]; break; }
+  }
+  if(!target) return;
+  var prevName = target.chatName, prevContent = target.chatContent;
+  target.chatName = f.name;
+  target.chatContent = String(reader.result);
+  saveSnapshotToCloud(w.id, target).then(function(){
+    renderSnapshots();
+    toast("ちゃっとを束ねました："+f.name, false);
+  }, function(e){
+    target.chatName = prevName; target.chatContent = prevContent;
+    renderSnapshots();
+    if(e.code==="snapshot-too-large") toast("このちゃっとは大きすぎます（"+e.kb+"KB）— 添付できません", true);
+    else toast("添付に失敗しました: "+(e.code||e.message), true);
+  });
+};
     reader.readAsText(f);
     chatFileInput.value="";
   });
@@ -816,12 +825,17 @@ function setupApp(){
         editor.value = s.text; w.text = s.text; save(); updateCounts(); toast("本文を戻しました", false);
       }
     }
-    if(act==="delsnap"){
-      if(confirm("このスナップショットを削除しますか？")){
-        w.snapshots = w.snapshots.filter(function(x){return x.id!==btn.getAttribute("data-id");});
-        save(); renderSnapshots();
-      }
-    }
+if(act==="delsnap"){
+  var sid = btn.getAttribute("data-id");
+  if(confirm("このスナップショットを削除しますか？")){
+    w.snapshots = w.snapshots.filter(function(x){ return x.id!==sid; });
+    renderSnapshots();
+    deleteDoc(snapRef(w.id, sid)).catch(function(e){
+      console.error("Snapshot delete error:", e);
+      toast("クラウドからの削除に失敗しました", true);
+    });
+  }
+}
     if(act==="delrec"){
       var idx = parseInt(btn.getAttribute("data-idx"),10);
       if(confirm("この改稿記録を削除しますか？")){
