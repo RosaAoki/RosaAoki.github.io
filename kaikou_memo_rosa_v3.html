@@ -171,7 +171,7 @@
     position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(8px);
     background:var(--ink);color:var(--paper);font-size:13px;padding:8px 16px;border-radius:999px;
     opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
-    max-width:88vw;text-align:center;z-index:900;
+    max-width:88vw;text-align:center;z-index:960;
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   #toast.shu{background:var(--shu);}
@@ -223,6 +223,7 @@
       <span class="modebadge" id="modeBadge">通常</span>
       <span class="hint" id="modeHint">全文コピーで自動的にスナップショットを撮り、朱筆モードに入ります。</span>
       <button id="copyAllBtn">全文コピー</button>
+      <button id="pageBreakBtn">枚の区切り</button>
       <button id="modeBtn">朱筆モードへ</button>
     </div>
     <div id="editorWrap">
@@ -291,6 +292,11 @@
   <button id="quickSaveBtn" style="font-size:12px;padding:3px 10px;">ファイルに保存</button>
 </footer>
 
+<div id="pagePreview" style="display:none;position:fixed;inset:0;z-index:950;background:var(--paper);overflow:auto;padding:20px 16px;">
+  <button id="pagePreviewClose" style="position:sticky;top:0;float:right;">閉じる</button>
+  <div id="pagePreviewBody" style="font-family:'Hiragino Mincho ProN','Yu Mincho',serif;font-size:14px;line-height:1.9;white-space:pre-wrap;word-break:break-all;"></div>
+</div>
+  
 <div id="toast" role="status"></div>
 <input type="file" id="chatFile" accept=".json,.txt" hidden>
 
@@ -562,6 +568,32 @@ function setupApp(){
   footMode   = document.getElementById("footMode");
   diffBody   = document.getElementById("diffBody");
   workSelect = document.getElementById("workSelect");
+
+  document.getElementById("pageBreakBtn").addEventListener("click", function(){
+  var w = cur(), cols = w.cols, rows = w.rows;
+  var lines = editor.value.split("\n");
+  var out = [], rowCount = 0, page = 1;
+  for(var i=0;i<lines.length;i++){
+    var line = lines[i];
+    var chunks = [];
+    if(line.length === 0) chunks.push("");
+    else for(var p=0; p<line.length; p+=cols) chunks.push(line.slice(p, p+cols));
+    for(var c=0;c<chunks.length;c++){
+      if(rowCount === rows){
+        out.push("\n────────  "+page+" 枚目 おわり ────────\n");
+        page++; rowCount = 0;
+      }
+      out.push(chunks[c]);
+      rowCount++;
+    }
+  }
+  document.getElementById("pagePreviewBody").textContent =
+    out.join("\n") + "\n\n──── 全 "+page+" 枚(最終枚 "+rowCount+" 行)────";
+  document.getElementById("pagePreview").style.display = "block";
+});
+document.getElementById("pagePreviewClose").addEventListener("click", function(){
+  document.getElementById("pagePreview").style.display = "none";
+});
 
   /* ---------- 保存（Firestore） ---------- */
   var saveTimer=null;
