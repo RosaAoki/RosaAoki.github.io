@@ -80,6 +80,27 @@
     font-size:13px;color:var(--quiet);margin-top:18px;letter-spacing:.06em;
   }
 
+  /* ---- 折りたたみ ---- */
+  details.more-works{
+    margin-top:22px;
+  }
+  details.more-works summary{
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+    font-size:13px;color:var(--wasurenagusa);
+    letter-spacing:.08em;cursor:pointer;
+    list-style:none;padding:6px 0;
+    display:inline-block;
+    border-bottom:1px solid transparent;
+  }
+  details.more-works summary::-webkit-details-marker{display:none;}
+  details.more-works summary::before{
+    content:"＋ ";color:var(--wasurenagusa-soft);
+  }
+  details.more-works[open] summary::before{content:"− ";}
+  details.more-works summary:hover,
+  details.more-works summary:focus-visible{border-bottom-color:var(--wasurenagusa-soft);}
+  details.more-works ul.works{margin-top:12px;}
+
   /* ---- 配布物 ---- */
   .tool{
     border:1px solid var(--line);border-radius:8px;
@@ -119,7 +140,7 @@
   }
 </style>
 </head>
- 
+
 <body>
 <div class="wrap">
 
@@ -149,8 +170,8 @@
         <div class="w-title">白雨の記録係―明日、あなたが私を忘れるとしても―</div>
         <div class="w-note">完結</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n4870lu/">なろう</a>
+          <a href="https://ncode.syosetu.com/n4870lu/"
+             data-goatcounter-click="out/narou/白雨の記録係">なろう</a>
         </div>
       </li>
 
@@ -158,8 +179,9 @@
         <div class="w-title">レーテーのほとりで、虚構とワルツを</div>
         <div class="w-note">連作短編・毎月1〜5日更新・8月完結予定 — 五か月、五つの物語。最後に、ひとつに繋がります。</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n6248lt/">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051596701981376">カクヨム</a>
+          <a href="https://ncode.syosetu.com/n6248lt/"
+             data-goatcounter-click="out/narou/レーテー">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051596701981376"
+             data-goatcounter-click="out/kakuyomu/レーテー">カクヨム</a>
         </div>
       </li>
 
@@ -167,8 +189,8 @@
         <div class="w-title">世界の平和は、僕の地獄で成り立っている</div>
         <div class="w-note">完結</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n7033lr/">なろう</a>
+          <a href="https://ncode.syosetu.com/n7033lr/"
+             data-goatcounter-click="out/narou/世界の平和">なろう</a>
         </div>
       </li>
 
@@ -176,8 +198,9 @@
         <div class="w-title">Claude</div>
         <div class="w-note">掌編</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n3326mb/">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051597793650676">カクヨム</a>
+          <a href="https://ncode.syosetu.com/n3326mb/"
+             data-goatcounter-click="out/narou/Claude">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051597793650676"
+             data-goatcounter-click="out/kakuyomu/Claude">カクヨム</a>
         </div>
       </li>
 
@@ -185,8 +208,8 @@
         <div class="w-title">復讐は合法的に。――父を殺された領主は清廉な刃で覇権領を滅ぼす</div>
         <div class="w-note">完結</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n2771lr/">なろう</a>
+          <a href="https://ncode.syosetu.com/n2771lr/"
+             data-goatcounter-click="out/narou/復讐は合法的に">なろう</a>
         </div>
       </li>
 
@@ -194,8 +217,8 @@
         <div class="w-title">スマート・監獄（プリズン）～SNSでシェアした投稿で、日本が終了の危機に陥りました</div>
         <div class="w-note">完結</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n6587lp/">なろう</a>
+          <a href="https://ncode.syosetu.com/n6587lp/"
+             data-goatcounter-click="out/narou/スマート監獄">なろう</a>
         </div>
       </li>
 
@@ -203,8 +226,8 @@
         <div class="w-title">とある観測機のログ ― 滅びた世界の片隅で、歌う少女型自動人形（オートマトン）を観察しています</div>
         <div class="w-note">完結</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n5681lp/">なろう</a>
+          <a href="https://ncode.syosetu.com/n5681lp/"
+             data-goatcounter-click="out/narou/とある観測機のログ">なろう</a>
         </div>
       </li>
 
@@ -212,17 +235,136 @@
         <div class="w-title">バベルの揺り籠</div>
         <div class="w-note">掌編</div>
         <div class="w-links">
-          
-          <a href="https://ncode.syosetu.com/n1781lt/">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051600604175128">カクヨム</a>
+          <a href="https://ncode.syosetu.com/n1781lt/"
+             data-goatcounter-click="out/narou/バベルの揺り籠">なろう</a><span class="sep">／</span><a href="https://kakuyomu.jp/works/2912051600604175128"
+             data-goatcounter-click="out/kakuyomu/バベルの揺り籠">カクヨム</a>
         </div>
       </li>
 
     </ul>
+
+    <details class="more-works" id="more-works">
+      <summary>短編・掌編ほか（12作品）</summary>
+      <ul class="works">
+
+        <li>
+          <div class="w-title">本文は全て手打ちだけど区分は『AI間接利用』です――「素材に」した部分を説明できるよう、AI提案の採用履歴を記録するツールを作りました。</div>
+          <div class="w-note">エッセイ</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n9115mh/"
+               data-goatcounter-click="out/narou/AI間接利用エッセイ">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">全員参加型ババ抜き（但し全員ババ持ち）</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n8917md/"
+               data-goatcounter-click="out/narou/全員参加型ババ抜き">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">てのひらの外側</div>
+          <div class="w-note">完結</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n9476lu/"
+               data-goatcounter-click="out/narou/てのひらの外側">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">ラベルのない小瓶</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n5129ls/"
+               data-goatcounter-click="out/narou/ラベルのない小瓶">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">選択という名の贅沢～公爵令嬢は清貧改革で断罪を回避する～</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n5023lr/"
+               data-goatcounter-click="out/narou/選択という名の贅沢">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">【ランキング入り記念SS】物語の形をした「小説」の用法 ―ある男とAIの対話記録―</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n6257lq/"
+               data-goatcounter-click="out/narou/物語の形をした小説の用法">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">【悲報】異世界転生したけど、邪神のせいで1からやり直しです、ちくしょう！</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n4437lq/"
+               data-goatcounter-click="out/narou/悲報異世界転生">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">アイデンティティ ―あなたはわたしで、わたしがあなた―</div>
+          <div class="w-note">短編・R15／残酷な描写あり</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n4174lq/"
+               data-goatcounter-click="out/narou/アイデンティティ">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">星銀黒曜石（スター・オブ・オブシディアン）の輝き</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n7263ln/"
+               data-goatcounter-click="out/narou/星銀黒曜石">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">背に触れるもの</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n1292ln/"
+               data-goatcounter-click="out/narou/背に触れるもの">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">Echo of Silence</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n9892lm/"
+               data-goatcounter-click="out/narou/EchoOfSilence">なろう</a>
+          </div>
+        </li>
+
+        <li>
+          <div class="w-title">ミュートのリズム</div>
+          <div class="w-note">短編</div>
+          <div class="w-links">
+            <a href="https://ncode.syosetu.com/n4961lm/"
+               data-goatcounter-click="out/narou/ミュートのリズム">なろう</a>
+          </div>
+        </li>
+
+      </ul>
+    </details>
+
     <p class="more">
-      ほか、短編・掌編多数 —
-      <a href="https://mypage.syosetu.com/mypage/novellist/userid/1317905/">なろうマイページ</a>
+      各サイトのマイページ —
+      <a href="https://mypage.syosetu.com/mypage/novellist/userid/1317905/"
+         data-goatcounter-click="out/narou/マイページ">なろう</a>
       <span style="color:var(--line)">／</span>
-      <a href="https://kakuyomu.jp/users/RosaAoki_">カクヨムマイページ</a>
+      <a href="https://kakuyomu.jp/users/RosaAoki_"
+         data-goatcounter-click="out/kakuyomu/マイページ">カクヨム</a>
     </p>
   </section>
 
@@ -233,7 +375,6 @@
       <p>
         AIの提案による改稿を記録するための、書き手のためのメモ帳。
         『全文コピー』ボタンで改稿前の本文を控えに残し、朱筆モードに入ります。
-        
       </p>
       <p class="fine">
         ・本ツールは「AIの提案による改稿の記録」を目的としたものです。<span style="color:red;">AI不使用の証明装置ではありません。</span><br>
@@ -244,13 +385,16 @@
         ・ライセンス:MIT(自由に使用・改変・再配布可、無保証)<br>
         ・本ツールの配布元は当ページのみです。他所で配布されているものについては関知しません。
       </p>
-      <a href="kaikou_memo.html" target="_blank" rel="noopener">ブラウザで開く</a>
-      <a href="kaikou_memo.html" download>ダウンロード（無料）</a>
+      <a href="kaikou_memo.html" target="_blank" rel="noopener"
+         data-goatcounter-click="tool/改稿記録メモ/開く">ブラウザで開く</a>
+      <a href="kaikou_memo.html" download
+         data-goatcounter-click="tool/改稿記録メモ/DL">ダウンロード（無料）</a>
     </div>
   </section>
 
   <footer>
-    <div class="x"><a href="https://x.com/RosaAoki_">X @RosaAoki_</a></div>
+    <div class="x"><a href="https://x.com/RosaAoki_"
+       data-goatcounter-click="out/x/profile">X @RosaAoki_</a></div>
     <div>© 2026 蒼樹ろーさ</div>
   </footer>
 
@@ -258,5 +402,17 @@
 
 <script data-goatcounter="https://rosaaoki.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+
+<script>
+  document.getElementById('more-works').addEventListener('toggle', function(){
+    if(this.open && window.goatcounter && window.goatcounter.count){
+      window.goatcounter.count({
+        path:  'ui/短編一覧/開く',
+        title: '短編一覧を開いた',
+        event: true
+      });
+    }
+  });
+</script>
 </body>
 </html>
