@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ラウンドアプリ 設定エディタ</title>
+<style>
+  :root{
+    --brand:#0064B4; --brand-press:#004E8C; --brand-tint:#E2EEF8;
+    --bg:#FFFFFF; --surface:#F7F9FA;
+    --line:#D9DEE3; --line-strong:#8B959C;
+    --ink:#1A252D; --ink-soft:#5E6D78;
+    --pending:#FFF8E3; --pending-ink:#8A6A12;
+    --alert:#C22F26; --alert-tint:#FDEDEC;
+    --ok:#1F6B4A; --ok-tint:#E8F4EE;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--surface); color:var(--ink);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+    line-height:1.6; padding:24px 16px 80px; font-size:14px;
+  }
+  .wrap{max-width:900px; margin:0 auto;}
+  header{margin-bottom:20px;}
+  h1{font-size:19px; margin:0 0 4px; font-weight:600;}
+  header p{margin:0; font-size:12.5px; color:var(--ink-soft);}
+
+  .notice{
+    background:var(--pending); border:1px solid #E8D9A8; color:var(--pending-ink);
+    border-radius:8px; padding:10px 14px; font-size:12.5px; margin:14px 0 20px;
+  }
+  .notice b{color:#6B520D;}
+
+  .panel{background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:14px;}
+  .panel > h2{font-size:14px; margin:0 0 2px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .panel .desc{font-size:12px; color:var(--ink-soft); margin:0 0 12px;}
+  .step{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--brand); color:#fff; font-size:11px; font-weight:600; flex-shrink:0;
+  }
+
+  label.fl{display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin:12px 0 5px;}
+  input[type=text], textarea, select{
+    width:100%; font-family:inherit; font-size:13px; color:var(--ink);
+    background:var(--bg); border:1px solid var(--line-strong); border-radius:6px;
+    padding:8px 10px; line-height:1.5;
+  }
+  textarea{font-family:var(--mono); font-size:12.5px; resize:vertical; min-height:80px;}
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:var(--brand);}
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .row > *{flex:1; min-width:180px;}
+
+  button{
+    font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    border-radius:6px; padding:8px 16px; border:1px solid var(--line-strong);
+    background:var(--bg); color:var(--ink);
+  }
+  button:hover{background:var(--surface);}
+  button:active{transform:translateY(1px);}
+  button:focus-visible{outline:2px solid var(--brand); outline-offset:1px;}
+  .primary{background:var(--brand); color:#fff; border-color:var(--brand);}
+  .primary:hover{background:var(--brand-press);}
+  .sm{padding:5px 11px; font-size:12px;}
+  .danger{color:var(--alert); border-color:#E8B4B0;}
+  .danger:hover{background:var(--alert-tint);}
+  .btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+
+  .bldg{border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:12px; background:var(--surface);}
+  .bldg-head{display:flex; gap:10px; align-items:center; margin-bottom:6px;}
+  .bldg-head input{flex:1;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-top:4px;}
+  .gcard{background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:10px;}
+  .gcard .gname{font-size:12px; font-weight:600; color:var(--brand); margin-bottom:6px;}
+  .gcard textarea{min-height:70px;}
+
+  .hint{font-size:11.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5;}
+  .count{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
+
+  #result{margin-top:12px;}
+  .msg{border-radius:6px; padding:8px 12px; font-size:12.5px; margin-bottom:6px;}
+  .msg.err{background:var(--alert-tint); color:#8A211A; border:1px solid #F0C4C1;}
+  .msg.warn{background:var(--pending); color:var(--pending-ink); border:1px solid #E8D9A8;}
+  .msg.ok{background:var(--ok-tint); color:var(--ok); border:1px solid #BFE0CE;}
+  table.sum{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:10px;}
+  table.sum th, table.sum td{text-align:left; padding:5px 8px; border-bottom:1px solid var(--line);}
+  table.sum th{color:var(--ink-soft); font-weight:600; font-size:11.5px;}
+  table.sum td.n{text-align:right; font-family:var(--mono);}
+
+  pre#preview{
+    background:var(--ink); color:#E6EDF3; border-radius:8px; padding:12px;
+    font-family:var(--mono); font-size:11.5px; line-height:1.5;
+    max-height:280px; overflow:auto; margin-top:10px; display:none;
+  }
+  footer{text-align:center; font-size:11.5px; color:var(--ink-soft); margin-top:26px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>ラウンドアプリ 設定エディタ</h1>
+  <p>部署名などをまとめて入力し、設定JSONを書き出します。</p>
+</header>
+
+<div class="notice">
+  <b>このページは入力内容をどこにも保存しません。</b>
+  閉じると消えます。書き出したJSONは実在の施設情報を含むので、リポジトリには入れず手元で管理してください。
+</div>
+
+<div class="panel">
+  <h2><span class="step">1</span> 読み込み</h2>
+  <p class="desc">既存の設定を編集する場合は読み込んでください。新規なら「空から始める」で進めます。</p>
+  <div class="btns">
+    <button id="btn-file">ファイルから読み込む</button>
+    <button id="btn-blank">空から始める</button>
+    <input type="file" id="file" accept="application/json,.json" hidden>
+  </div>
+  <div id="load-msg" class="hint"></div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">2</span> 基本</h2>
+  <div class="row">
+    <div>
+      <label class="fl" for="roundType">ラウンド種別</label>
+      <select id="roundType">
+        <option value="ICT">ICT（菌のサーベイランス）</option>
+        <option value="ICS">ICS（環境ラウンド）</option>
+      </select>
+    </div>
+    <div>
+      <label class="fl" for="configLabel">設定の名前</label>
+      <input type="text" id="configLabel" placeholder="2026年度 設定">
+    </div>
+  </div>
+  <label class="fl" for="groups">巡回の組（カンマ区切り）</label>
+  <input type="text" id="groups" value="A,B,C,D">
+  <div class="hint">組ごとの件数が揃っていなくても構いません。空の組があれば注意として知らせます。</div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">3</span> ラウンド者</h2>
+  <p class="desc">1行に1名。開始画面の候補になります。</p>
+  <textarea id="rounders" placeholder="山田 太郎&#10;佐藤 花子&#10;鈴木 一郎"></textarea>
+  <div class="count" id="c-rounders"></div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">4</span> 記録する項目</h2>
+  <p class="desc">1行に1項目。ここは滅多に変わらないので、初期値のままで足りることが多いはずです。</p>
+  <div class="row">
+    <div>
+      <label class="fl" for="organisms">菌（チップ選択で人数を入れる）</label>
+      <textarea id="organisms"></textarea>
+      <div class="count" id="c-organisms"></div>
+    </div>
+    <div>
+      <label class="fl" for="incidents">インシデント（有無＋詳細）</label>
+      <textarea id="incidents"></textarea>
+      <div class="count" id="c-incidents"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">5</span> 館と部署</h2>
+  <p class="desc">
+    1行に1か所。行頭に数字があれば部署コードとして扱います（例: <code>30 内科外来</code>）。
+    Excelの列からそのまま貼り付けられます。
+  </p>
+  <div id="bldgs"></div>
+  <div class="btns">
+    <button id="btn-add-bldg" class="sm">＋ 館を追加</button>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">6</span> 確認して書き出す</h2>
+  <div class="btns">
+    <button id="btn-check" class="primary">確認する</button>
+    <button id="btn-download">JSONをダウンロード</button>
+    <button id="btn-preview" class="sm">中身を見る</button>
+  </div>
+  <div id="result"></div>
+  <pre id="preview"></pre>
+</div>
+
+<footer>入力内容はブラウザに保存されません。書き出したファイルを手元で管理してください。</footer>
+</div>
+
+<script>
+"use strict";
+
+var DEFAULT_ORGANISMS = ["MRSA","MDRP（2剤耐性）","ESBL","CD","CRE（3剤耐性）","CRE（メロペネム）"];
+var DEFAULT_INCIDENTS = ["針刺し","体液曝露"];
+
+var prevIds = {};   // ラベル -> 既存id（読み込んだ設定から引き継ぐ）
+var bldgSeq = 0;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function lines(t){
+  return String(t||"").split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+}
+function parsePlace(line){
+  var m = line.match(/^(\d+)[\s\u3000]+(.+)$/);
+  if (m) return { code: m[1], label: m[2].trim() };
+  return { label: line };
+}
+function groupNames(){
+  return ($("groups").value || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+}
+
+/* ---------- 館のUI ---------- */
+function buildingBlock(data){
+  data = data || {};
+  var id = "b" + (++bldgSeq);
+  var wrap = document.createElement("div");
+  wrap.className = "bldg";
+  wrap.dataset.key = id;
+
+  var gs = groupNames();
+  var cards = gs.map(function(g){
+    return '<div class="gcard">' +
+      '<div class="gname">組 ' + esc(g) + '</div>' +
+      '<textarea data-group="' + esc(g) + '" placeholder="30 内科外来"></textarea>' +
+      '<div class="count" data-count-group="' + esc(g) + '"></div>' +
+      '</div>';
+  }).join("");
+
+  wrap.innerHTML =
+    '<div class="bldg-head">' +
+      '<input type="text" data-role="label" placeholder="本館">' +
+      '<button class="sm danger" data-role="remove">削除</button>' +
+    '</div>' +
+    '<label class="fl">病棟など（毎回まわる場所）</label>' +
+    '<textarea data-role="wards" placeholder="3階東病棟&#10;3階西病棟"></textarea>' +
+    '<div class="count" data-count="wards"></div>' +
+    '<label class="fl">4週に1回まわる場所</label>' +
+    '<div class="grid" data-role="groups">' + cards + '</div>';
+
+  wrap.querySelector('[data-role="remove"]').addEventListener("click", function(){
+    if (confirm("この館を削除しますか？")) wrap.remove();
+  });
+
+  wrap.querySelector('[data-role="label"]').value = data.label || "";
+  wrap.querySelector('[data-role="wards"]').value =
+    (data.wards || []).map(function(w){ return w.label; }).join("\n");
+
+  gs.forEach(function(g){
+    var ta = wrap.querySelector('textarea[data-group="' + g + '"]');
+    if (!ta) return;
+    var list = (data.rotationAreas || {})[g] || [];
+    ta.value = list.map(function(a){
+      return (a.code ? a.code + " " : "") + a.label;
+    }).join("\n");
+  });
+
+  wrap.addEventListener("input", function(){ updateCounts(); });
+  $("bldgs").appendChild(wrap);
+  return wrap;
+}
+
+function rebuildGroupCards(){
+  var gs = groupNames();
+  Array.prototype.forEach.call($("bldgs").children, function(wrap){
+    var host = wrap.querySelector('[data-role="groups"]');
+    var keep = {};
+    Array.prototype.forEach.call(host.querySelectorAll("textarea"), function(ta){
+      keep[ta.dataset.group] = ta.value;
+    });
+    host.innerHTML = gs.map(function(g){
+      return '<div class="gcard">' +
+        '<div class="gname">組 ' + esc(g) + '</div>' +
+        '<textarea data-group="' + esc(g) + '"></textarea>' +
+        '<div class="count" data-count-group="' + esc(g) + '"></div>' +
+        '</div>';
+    }).join("");
+    gs.forEach(function(g){
+      var ta = host.querySelector('textarea[data-group="' + g + '"]');
+      if (ta && keep[g] !== undefined) ta.value = keep[g];
+    });
+  });
+  updateCounts();
+}
+
+/* ---------- 件数表示 ---------- */
+function updateCounts(){
+  $("c-rounders").textContent   = lines($("rounders").value).length + " 名";
+  $("c-organisms").textContent  = lines($("organisms").value).length + " 件";
+  $("c-incidents").textContent  = lines($("incidents").value).length + " 件";
+  Array.prototype.forEach.call($("bldgs").children, function(wrap){
+    var w = lines(wrap.querySelector('[data-role="wards"]').value).length;
+    wrap.querySelector('[data-count="wards"]').textContent = w + " か所";
+    Array.prototype.forEach.call(wrap.querySelectorAll("textarea[data-group]"), function(ta){
+      var el = wrap.querySelector('[data-count-group="' + ta.dataset.group + '"]');
+      if (el) el.textContent = lines(ta.value).length + " か所";
+    });
+  });
+}
+
+/* ---------- JSONの組み立て ---------- */
+function slugId(prefix, n){ return prefix + "-" + String(n).padStart(3, "0"); }
+
+function makeAssigner(){
+  var used = new Set(), counters = {};
+  return function(prefix, label){
+    if (prevIds[label] && !used.has(prevIds[label])){
+      used.add(prevIds[label]);
+      return prevIds[label];
+    }
+    counters[prefix] = counters[prefix] || 0;
+    var id;
+    do { counters[prefix]++; id = slugId(prefix, counters[prefix]); } while (used.has(id));
+    used.add(id);
+    return id;
+  };
+}
+
+function itemsFrom(text, prefix, assign){
+  return lines(text).map(function(label){
+    return { id: assign(prefix, label), label: label };
+  });
+}
+
+function buildConfig(){
+  var assign = makeAssigner();
+  var gs = groupNames();
+
+  var cfg = {
+    _readme: "実在の施設情報を含みます。リポジトリには入れず、手元で管理してください。",
+    schemaVersion: 1,
+    roundType: $("roundType").value,
+    configLabel: $("configLabel").value.trim() || "設定",
+    rounders: lines($("rounders").value),
+    chips: { values: [0,1,2,3,4], overflowLabel: "5+", overflowMin: 5 },
+    organisms: itemsFrom($("organisms").value, "org", assign),
+    incidents: itemsFrom($("incidents").value, "inc", assign),
+    rotation: { mode: "manual", groups: gs },
+    buildings: []
+  };
+
+  Array.prototype.forEach.call($("bldgs").children, function(wrap, i){
+    var b = {
+      id: assign("bldg", wrap.querySelector('[data-role="label"]').value.trim() || ("館" + (i+1))),
+      label: wrap.querySelector('[data-role="label"]').value.trim(),
+      wards: lines(wrap.querySelector('[data-role="wards"]').value).map(function(label){
+        return { id: assign("w", label), label: label };
+      }),
+      rotationAreas: {}
+    };
+    gs.forEach(function(g){
+      var ta = wrap.querySelector('textarea[data-group="' + g + '"]');
+      b.rotationAreas[g] = lines(ta ? ta.value : "").map(function(line){
+        var p = parsePlace(line);
+        var o = { id: assign("a", p.label), label: p.label };
+        if (p.code) o.code = p.code;
+        return o;
+      });
+    });
+    cfg.buildings.push(b);
+  });
+
+  return cfg;
+}
+
+/* ---------- 検証 ---------- */
+function validate(cfg){
+  var errs = [], warns = [];
+
+  if (cfg.rounders.length < 3) errs.push("ラウンド者が3名未満です（開始画面で3つ選ぶため）");
+  if (!cfg.organisms.length)   errs.push("記録する菌の項目がありません");
+  if (!cfg.rotation.groups.length) errs.push("巡回の組がありません");
+  if (!cfg.buildings.length)   errs.push("館が1つもありません");
+
+  function dupes(arr){
+    var seen = {}, out = {};
+    arr.forEach(function(x){ if (seen[x]) out[x] = 1; seen[x] = 1; });
+    return Object.keys(out);
+  }
+
+  var d1 = dupes(cfg.organisms.map(function(o){ return o.label; }));
+  if (d1.length) errs.push("菌の項目名が重複: " + d1.join(", "));
+  var d2 = dupes(cfg.incidents.map(function(o){ return o.label; }));
+  if (d2.length) errs.push("インシデント名が重複: " + d2.join(", "));
+
+  var allIds = [], allLabels = [];
+  cfg.buildings.forEach(function(b){
+    if (!b.label) errs.push("名前のない館があります");
+    if (!b.wards.length) warns.push((b.label || "?") + ": 毎回まわる場所が空です");
+    b.wards.forEach(function(w){ allIds.push(w.id); allLabels.push(w.label); });
+    cfg.rotation.groups.forEach(function(g){
+      var list = b.rotationAreas[g] || [];
+      if (!list.length) warns.push((b.label || "?") + ": 組 " + g + " が空です");
+      list.forEach(function(a){ allIds.push(a.id); allLabels.push(a.label); });
+    });
+  });
+
+  var dupId = dupes(allIds);
+  if (dupId.length) errs.push("場所のidが重複: " + dupId.join(", "));
+  var dupLabel = dupes(allLabels);
+  if (dupLabel.length) warns.push("同じ名前の場所が複数あります: " + dupLabel.join(", "));
+
+  var longs = allLabels.filter(function(x){ return x.length > 12; });
+  if (longs.length) warns.push("12文字を超える名前（ボタンからはみ出す可能性）: " + longs.join(" / "));
+
+  return { errs: errs, warns: warns, total: allIds.length };
+}
+
+function renderResult(cfg, v){
+  var h = "";
+  v.errs.forEach(function(m){ h += '<div class="msg err">' + esc(m) + "</div>"; });
+  v.warns.forEach(function(m){ h += '<div class="msg warn">' + esc(m) + "</div>"; });
+  if (!v.errs.length) h += '<div class="msg ok">書き出せます</div>';
+
+  h += '<table class="sum"><tr><th>項目</th><th style="text-align:right">件数</th></tr>';
+  h += '<tr><td>ラウンド者</td><td class="n">' + cfg.rounders.length + "</td></tr>";
+  h += '<tr><td>菌の項目</td><td class="n">' + cfg.organisms.length + "</td></tr>";
+  h += '<tr><td>インシデント</td><td class="n">' + cfg.incidents.length + "</td></tr>";
+  cfg.buildings.forEach(function(b){
+    var per = cfg.rotation.groups.map(function(g){
+      return g + ":" + (b.rotationAreas[g] || []).length;
+    }).join(" ");
+    h += "<tr><td>" + esc(b.label || "(名前なし)") + " 　毎回 / 巡回 " + esc(per) +
+         '</td><td class="n">' + b.wards.length + "</td></tr>";
+  });
+  h += '<tr><td><b>場所の総数</b></td><td class="n"><b>' + v.total + "</b></td></tr></table>";
+  $("result").innerHTML = h;
+}
+
+/* ---------- 読み書き ---------- */
+function applyConfig(cfg){
+  prevIds = {};
+  function remember(list){ (list||[]).forEach(function(x){ if (x && x.label) prevIds[x.label] = x.id; }); }
+
+  $("roundType").value   = cfg.roundType === "ICS" ? "ICS" : "ICT";
+  $("configLabel").value = cfg.configLabel || "";
+  $("groups").value      = ((cfg.rotation && cfg.rotation.groups) || ["A","B","C","D"]).join(",");
+  $("rounders").value    = (cfg.rounders || []).join("\n");
+  $("organisms").value   = (cfg.organisms || []).map(function(o){ return o.label; }).join("\n");
+  $("incidents").value   = (cfg.incidents || []).map(function(o){ return o.label; }).join("\n");
+
+  remember(cfg.organisms); remember(cfg.incidents);
+  $("bldgs").innerHTML = "";
+  (cfg.buildings || []).forEach(function(b){
+    remember(b.wards);
+    Object.keys(b.rotationAreas || {}).forEach(function(g){ remember(b.rotationAreas[g]); });
+    if (b.label) prevIds[b.label] = b.id;
+    buildingBlock(b);
+  });
+  updateCounts();
+}
+
+function blankConfig(){
+  return {
+    roundType: "ICT",
+    configLabel: "",
+    rounders: [],
+    organisms: DEFAULT_ORGANISMS.map(function(l){ return { label: l }; }),
+    incidents: DEFAULT_INCIDENTS.map(function(l){ return { label: l }; }),
+    rotation: { groups: ["A","B","C","D"] },
+    buildings: [{ label: "", wards: [], rotationAreas: {} }]
+  };
+}
+
+function download(name, text){
+  var blob = new Blob([text], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 800);
+}
+
+/* ---------- 起動 ---------- */
+$("btn-file").addEventListener("click", function(){ $("file").click(); });
+$("file").addEventListener("change", function(){
+  var f = this.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var cfg = JSON.parse(String(r.result));
+      applyConfig(cfg);
+      $("load-msg").textContent = "読み込みました: " + f.name + "（既存のidは名前が一致する分だけ引き継ぎます）";
+    } catch (e) {
+      $("load-msg").textContent = "JSONとして読めませんでした。";
+    }
+  };
+  r.readAsText(f);
+  this.value = "";
+});
+$("btn-blank").addEventListener("click", function(){
+  applyConfig(blankConfig());
+  $("load-msg").textContent = "空の状態から始めます。";
+});
+$("btn-add-bldg").addEventListener("click", function(){ buildingBlock({}); updateCounts(); });
+$("groups").addEventListener("change", rebuildGroupCards);
+["rounders","organisms","incidents"].forEach(function(id){
+  $(id).addEventListener("input", updateCounts);
+});
+$("btn-check").addEventListener("click", function(){
+  var cfg = buildConfig();
+  renderResult(cfg, validate(cfg));
+});
+$("btn-preview").addEventListener("click", function(){
+  var pre = $("preview");
+  if (pre.style.display === "block"){ pre.style.display = "none"; return; }
+  pre.textContent = JSON.stringify(buildConfig(), null, 2);
+  pre.style.display = "block";
+});
+$("btn-download").addEventListener("click", function(){
+  var cfg = buildConfig();
+  var v = validate(cfg);
+  renderResult(cfg, v);
+  if (v.errs.length){
+    alert("エラーが " + v.errs.length + " 件あります。直してから書き出してください。");
+    return;
+  }
+  var name = "config." + cfg.roundType.toLowerCase() + ".json";
+  if (!confirm(name + " をダウンロードします。\n\nこのファイルは実在の施設情報を含みます。リポジトリには入れないでください。")) return;
+  download(name, JSON.stringify(cfg, null, 2));
+});
+
+applyConfig(blankConfig());
+</script>
+</body>
+</html>
