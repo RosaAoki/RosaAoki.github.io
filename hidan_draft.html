@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>制作資料｜被弾は必ずクリティカル。想定内です。｜蒼樹ろーさ</title>
-<meta name="description" content="着想の会話、AIが生成したドラフト全文（未修正）、キャラクターデザイン、そしてドラフトから確定稿へ。">
+<meta name="description" content="着想の会話、AIが生成したドラフト全文（未修正）、キャラクターデザインとイラスト、そしてドラフトから確定稿へ。">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="蒼樹ろーさ">
 <meta property="og:title" content="制作資料｜被弾は必ずクリティカル。想定内です。">
-<meta property="og:description" content="着想の会話、AIが生成したドラフト全文（未修正）、キャラクターデザイン、そしてドラフトから確定稿へ。">
+<meta property="og:description" content="着想の会話、AIが生成したドラフト全文（未修正）、キャラクターデザインとイラスト、そしてドラフトから確定稿へ。">
 <meta property="og:url" content="https://rosaaoki.github.io/hidan_draft.html">
 <meta property="og:image" content="https://rosaaoki.github.io/images/ogp_hidan.jpg">
 <meta property="og:image:width" content="1200">
@@ -169,7 +169,10 @@
   /* ---- 三面図 ---- */
   .art-grid { display: flex; flex-direction: column; gap: 2.5rem; }
   .art-item img { width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--border); }
-  .art-caption { font-size: 0.85rem; color: var(--sumi-soft); margin-top: 0.6rem; }
+  .art-caption { font-size: 0.85rem; color: var(--sumi-soft); margin-top: 0.6rem; line-height: 1.6; }
+  .art-caption a { color: var(--wasurenagusa); }
+  .art-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .art-pair .art-caption { font-size: 0.8rem; }
 
   /* ---- ドラフトから確定稿へ ---- */
   .changes p { margin: 0 0 1.4rem; }
@@ -225,7 +228,7 @@
     <ol>
       <li><a href="#chat">着想の会話</a></li>
       <li><a href="#draft">生成されたドラフト全文</a></li>
-      <li><a href="#art">キャラクターデザイン</a></li>
+      <li><a href="#art">キャラクターデザインとイラスト</a></li>
       <li><a href="#changes">ドラフトから確定稿へ</a></li>
       <li><a href="#links">完成した作品へ</a></li>
     </ol>
@@ -572,7 +575,7 @@
   </section>
 
   <section id="art">
-    <h2 class="section-heading">③ キャラクターデザイン</h2>
+    <h2 class="section-heading">③ キャラクターデザインとイラスト</h2>
     <div class="art-grid">
       <div class="art-item">
         <img src="images/hidan_meria.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="メリア（芽莉愛）三面図">
@@ -582,9 +585,15 @@
         <img src="images/hidan_armeria.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="アルメリア三面図">
         <p class="art-caption">アルメリア（VR内の姿）三面図</p>
       </div>
-      <div class="art-item">
-        <img src="images/hidan_rough.jpg" width="510" height="680" loading="lazy" decoding="async" alt="構図ラフ">
-        <p class="art-caption">構図ラフ（2026.9.19）</p>
+      <div class="art-pair">
+        <div class="art-item">
+          <img src="images/hidan_rough.jpg" width="510" height="680" loading="lazy" decoding="async" alt="構図ラフ（蒼樹ろーさ）">
+          <p class="art-caption">構図ラフ（2026.9.19）<br>蒼樹ろーさ</p>
+        </div>
+        <div class="art-item">
+          <img src="images/hidan_furicha.jpg" width="1200" height="1600" loading="lazy" decoding="async" alt="完成イラスト（ふりちゃ様）">
+          <p class="art-caption">完成イラスト<br>イラストをふりちゃ様（<a href="https://x.com/furiri_hamu" target="_blank" rel="noopener">@furiri_hamu</a>）に描いていただきました</p>
+        </div>
       </div>
     </div>
   </section>
