@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イラスト ― 蒼樹ろーさ</title>
+<meta name="description" content="蒼樹ろーさが描いたイラスト置き場。">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="蒼樹ろーさ">
+<meta property="og:title" content="イラスト ― 蒼樹ろーさ">
+<meta property="og:description" content="蒼樹ろーさが描いたイラスト置き場。">
+<meta property="og:url" content="https://rosaaoki.github.io/illustrations/">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  --paper:#FDFDFA;
+  --ink:#2B2A27;
+  --quiet:#80796F;
+  --faint:#A8A296;
+  --wasurenagusa:#3E6BB0;
+  --wasurenagusa-soft:#8FA9D6;
+  --line:#E8E5DC;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  font-size:16px;
+  line-height:2;
+  letter-spacing:.04em;
+}
+a{color:var(--wasurenagusa);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s;}
+a:hover, a:focus-visible{border-bottom-color:var(--wasurenagusa-soft);}
+a:focus-visible{outline:2px solid var(--wasurenagusa);outline-offset:2px;}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 24px 80px;}
+
+header{padding:14vh 0 8vh;text-align:center;}
+.back{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);letter-spacing:.1em;
+  display:inline-block;margin-bottom:28px;
+}
+h1{font-size:24px;font-weight:600;letter-spacing:.3em;text-indent:.3em;margin-bottom:14px;}
+.tagline{font-size:13px;color:var(--quiet);letter-spacing:.1em;}
+
+hr{border:none;border-top:1px solid var(--line);margin:0 0 56px;}
+
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:18px;
+  margin-bottom:40px;
+}
+.card{
+  border:1px solid var(--line);border-radius:8px;
+  overflow:hidden;background:#fff;
+}
+.card img{display:block;width:100%;height:auto;}
+.card .cap{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);padding:10px 12px;letter-spacing:.04em;line-height:1.6;
+}
+.card .cap .work{color:var(--wasurenagusa);}
+
+.empty{
+  border:1px dashed var(--line);border-radius:8px;
+  padding:48px 24px;text-align:center;
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:13px;color:var(--faint);line-height:2;
+}
+
+footer{
+  text-align:center;margin-top:40px;
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);letter-spacing:.1em;
+}
+
+@media (max-width:480px){
+  header{padding:10vh 0 6vh;}
+  h1{font-size:21px;}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back" href="../" data-goatcounter-click="page/イラスト/トップへ戻る">← 蒼樹ろーさ</a>
+    <h1>イラスト</h1>
+    <p class="tagline">ときどき描いたもの、少しずつここに。</p>
+  </header>
+
+  <hr>
+
+  <!--
+    1枚追加するごとに .gallery の中にこのブロックをコピーして増やしてください。
+    work クラスの <span> は、関連作品がある場合だけ使う（なければ丸ごと削除）。
+
+    <div class="card">
+      <img src="images/ファイル名.jpg" alt="説明（簡潔に）">
+      <div class="cap">タイトルなど<br><span class="work">『関連作品名』より</span></div>
+    </div>
+  -->
+  <div class="gallery" id="gallery">
+    <!-- ここに .card を追加していく -->
+  </div>
+
+  <div class="empty">
+    まだ何もありません。<br>少しずつ増えていく予定です。
+  </div>
+
+  <footer>
+    <div>© 2026 蒼樹ろーさ</div>
+  </footer>
+
+</div>
+
+<script data-goatcounter="https://rosaaoki.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
