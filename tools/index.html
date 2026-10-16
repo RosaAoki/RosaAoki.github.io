@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ツール ― 蒼樹ろーさ</title>
+<meta name="description" content="蒼樹ろーさが作った小さなツール・ゲーム置き場。">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="蒼樹ろーさ">
+<meta property="og:title" content="ツール ― 蒼樹ろーさ">
+<meta property="og:description" content="蒼樹ろーさが作った小さなツール・ゲーム置き場。">
+<meta property="og:url" content="https://rosaaoki.github.io/tools/">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  --paper:#FDFDFA;
+  --ink:#2B2A27;
+  --quiet:#80796F;
+  --wasurenagusa:#3E6BB0;
+  --wasurenagusa-soft:#8FA9D6;
+  --line:#E8E5DC;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  font-size:16px;
+  line-height:2;
+  letter-spacing:.04em;
+}
+a{color:var(--wasurenagusa);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s;}
+a:hover, a:focus-visible{border-bottom-color:var(--wasurenagusa-soft);}
+a:focus-visible{outline:2px solid var(--wasurenagusa);outline-offset:2px;}
+
+.wrap{max-width:620px;margin:0 auto;padding:0 24px 80px;}
+
+header{padding:14vh 0 8vh;text-align:center;}
+.back{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);letter-spacing:.1em;
+  display:inline-block;margin-bottom:28px;
+}
+h1{font-size:24px;font-weight:600;letter-spacing:.3em;text-indent:.3em;margin-bottom:14px;}
+.tagline{font-size:13px;color:var(--quiet);letter-spacing:.1em;}
+
+hr{border:none;border-top:1px solid var(--line);margin:0 0 56px;}
+
+ul.works{list-style:none;}
+ul.works li{padding:18px 0;border-bottom:1px solid var(--line);}
+ul.works li:first-child{border-top:1px solid var(--line);}
+.w-title{font-size:17px;font-weight:600;}
+.w-note{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);margin-top:2px;letter-spacing:.06em;
+}
+.w-links{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:13px;margin-top:6px;letter-spacing:.08em;
+}
+
+footer{
+  text-align:center;margin-top:56px;
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  font-size:12px;color:var(--quiet);letter-spacing:.1em;
+}
+
+@media (max-width:480px){
+  header{padding:10vh 0 6vh;}
+  h1{font-size:21px;}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back" href="../" data-goatcounter-click="page/ツール/トップへ戻る">← 蒼樹ろーさ</a>
+    <h1>ツール</h1>
+    <p class="tagline">手を動かして作った、小さなゲームたち。</p>
+  </header>
+
+  <hr>
+
+  <ul class="works">
+
+    <li>
+      <div class="w-title">Nagameru TETRIS ★</div>
+      <div class="w-note">物語の断片を集めながら遊ぶ、テトリスの派生版</div>
+      <div class="w-links">
+        <a href="https://rosaaoki.github.io/game/nagameru_tetris.html"
+           data-goatcounter-click="out/game/nagameru_tetris">遊ぶ</a>
+      </div>
+    </li>
+
+    <li>
+      <div class="w-title">ありんこドット 鬼ごっこ版</div>
+      <div class="w-note">小さなアリが逃げ惑う、ゆるい観察ゲーム</div>
+      <div class="w-links">
+        <a href="https://rosaaoki.github.io/game/arinko-dot.html"
+           data-goatcounter-click="out/game/arinko-dot">遊ぶ</a>
+      </div>
+    </li>
+
+    <li>
+      <div class="w-title">ありんこドット：Emergence World ―感染個体を隔離してください―</div>
+      <div class="w-note">感染が広がる前に、個体を見分けて隔離するシミュレーション</div>
+      <div class="w-links">
+        <a href="https://rosaaoki.github.io/game/test.html"
+           data-goatcounter-click="out/game/emergence_world">遊ぶ</a>
+      </div>
+    </li>
+
+  </ul>
+
+  <footer>
+    <div>© 2026 蒼樹ろーさ</div>
+  </footer>
+
+</div>
+
+<script data-goatcounter="https://rosaaoki.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
