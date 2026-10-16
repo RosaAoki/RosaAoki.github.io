@@ -55,6 +55,14 @@
   .tagline{
     font-size:14px;color:var(--quiet);letter-spacing:.18em;text-indent:.18em;
   }
+  nav.menu{
+    margin-top:28px;
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+    font-size:13px;letter-spacing:.06em;
+  }
+  nav.menu a{color:var(--ink);}
+  nav.menu a:hover, nav.menu a:focus-visible{border-bottom-color:var(--wasurenagusa-soft);}
+  nav.menu .sep{color:var(--line);margin:0 10px;}
 
   /* ---- 区切り ---- */
   hr{
@@ -169,6 +177,15 @@
     </svg>
     <h1>蒼樹ろーさ</h1>
     <p class="tagline">物語の後をついていく人。</p>
+    <nav class="menu">
+      <a href="#works" data-goatcounter-click="nav/作品">作品</a>
+      <span class="sep">／</span>
+      <a href="illustrations/" data-goatcounter-click="nav/イラスト">イラスト</a>
+      <span class="sep">／</span>
+      <a href="asobiba/" data-goatcounter-click="nav/あそびば">あそびば</a>
+      <span class="sep">／</span>
+      <a href="#kaikou" data-goatcounter-click="nav/配布物">配布物</a>
+    </nav>
   </header>
 
   <hr>
@@ -189,7 +206,7 @@
     </ul>
   </section>
 
-  <section>
+  <section id="works">
     <h2>作品</h2>
     <ul class="works">
 
@@ -447,7 +464,7 @@
       その他 —
       <a href="illustrations/" data-goatcounter-click="page/イラスト/トップから">イラスト</a>
       <span style="color:var(--line)">／</span>
-      <a href="tools/" data-goatcounter-click="page/ツール/トップから">ツール</a>
+      <a href="asobiba/" data-goatcounter-click="page/あそびば/トップから">あそびば</a>
     </p>
   </section>
 
